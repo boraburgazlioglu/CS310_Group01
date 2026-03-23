@@ -1,16 +1,6 @@
-# cs310_2026
+#BandMate
+##Sabancı University - Spring 2026 - CS310 Term Project
 
-CS310 Term Project 2026 Spring
+###Project Description
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+BandMate is a mobile app designed specifically for amateur music groups, that simply helps with the coordination and organization of the group members. The app keeps track of individual availability of the members, rehearsal times, gigs, creative progress and collective expenses. It functions as a band hub for the members to communicate, keep track, plan ahead and share ideas. The app allows members to share their personal schedule with the team, combines these schedules and automatically comes up with optimal rehearsal dates and time slots. Members are able to access the shared setlist and declare their progress on individual tracks. BandMate also keeps a log of shared expenses related to the band, which members can gain
