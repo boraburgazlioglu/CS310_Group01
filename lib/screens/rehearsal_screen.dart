@@ -1,3 +1,5 @@
+import '../widgets/bandmate_header.dart';
+import '../widgets/bot_nav_bar.dart';
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
@@ -131,16 +133,8 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        title: Text(
-          'Set Up Rehearsal',
-          style: AppTexts.headS,
-        ),
-      ),
+      backgroundColor: AppColors.backgroundDark,
+      appBar: BandmateHeader(),
       body: SingleChildScrollView(
         padding: AppPadding.allXL,
         child: Column(
@@ -202,7 +196,36 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                       style: AppTexts.bodyL,
                       keyboardType: TextInputType.datetime,
                       decoration: InputDecoration(
-                        hintText: 'xx:xx',
+                        hintText: 'Start Time (hr:mn)',
+                        hintStyle: AppTexts.bodyM,
+                        prefixIcon: Icon(
+                          Icons.access_time,
+                          color: AppColors.primary,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.background,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a time';
+                        }
+                        if (!_isValidTime(value.trim())) {
+                          return 'Use 24-hour xx:xx format';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _timeController,
+                      style: AppTexts.bodyL,
+                      keyboardType: TextInputType.datetime,
+                      decoration: InputDecoration(
+                        hintText: 'End Time (hr:mn)',
                         hintStyle: AppTexts.bodyM,
                         prefixIcon: Icon(
                           Icons.access_time,
@@ -362,6 +385,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: MyNavBar(currentIndex: 0),
     );
   }
 }
