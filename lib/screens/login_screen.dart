@@ -34,8 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/home');
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/home',
+                      (route) => false,
+                );
               },
               child: Text('Continue', style: AppTexts.button),
             ),
