@@ -1,3 +1,5 @@
+import '../widgets/bandmate_header.dart';
+import '../widgets/bot_nav_bar.dart';
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
@@ -9,7 +11,8 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundDark,
+      appBar: BandmateHeader(),
       body: SingleChildScrollView(
         padding: AppPadding.allL,
         child: Column(
@@ -89,7 +92,7 @@ class HomeScreen extends StatelessWidget {
                         child: _QuickActionButton(
                           label: 'Add Availability',
                           icon: Icons.event_available,
-                          onTap: () => Navigator.pushNamed(context, '/rehearsals'),
+                          onTap: () => Navigator.pushNamed(context, '/profile'),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -124,7 +127,7 @@ class HomeScreen extends StatelessWidget {
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
                                   height: 60,
-                                  color: AppColors.surfaceDark,
+                                  color: AppColors.background,
                                   child: Icon(Icons.image, color: AppColors.primary),
                                 ),
                           ),
@@ -153,6 +156,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: MyNavBar(currentIndex: -1),
     );
   }
 }
@@ -167,7 +171,7 @@ class _SectionCard extends StatelessWidget {
       width: double.infinity,
       padding: AppPadding.allL,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
       ),
       child: child,
