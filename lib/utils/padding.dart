@@ -4,24 +4,24 @@ class AppPadding{
   static const double S = 5.0;
   static const double M = 10.0;
   static const double L = 15.0;
-  static const double XL = 25.0;
+  static const double xl = 25.0;
 
   // all sides
   static const EdgeInsets allS = EdgeInsets.all(S);
   static const EdgeInsets allM = EdgeInsets.all(M);
   static const EdgeInsets allL = EdgeInsets.all(L);
-  static const EdgeInsets allXL = EdgeInsets.all(XL);
+  static const EdgeInsets allXL = EdgeInsets.all(xl);
 
   //horizontal + vertical
   static const EdgeInsets horiS = EdgeInsets.symmetric(horizontal: S);
   static const EdgeInsets horiM = EdgeInsets.symmetric(horizontal: M);
   static const EdgeInsets horiL = EdgeInsets.symmetric(horizontal: L);
-  static const EdgeInsets horiXL = EdgeInsets.symmetric(horizontal: XL);
+  static const EdgeInsets horiXL = EdgeInsets.symmetric(horizontal: xl);
 
   static const EdgeInsets vertS = EdgeInsets.symmetric(vertical: S);
   static const EdgeInsets vertM = EdgeInsets.symmetric(vertical: M);
   static const EdgeInsets vertL = EdgeInsets.symmetric(vertical: L);
-  static const EdgeInsets vertXL = EdgeInsets.symmetric(vertical: XL);
+  static const EdgeInsets vertXL = EdgeInsets.symmetric(vertical: xl);
 
   //each direction
   static const EdgeInsets topS = EdgeInsets.only(top: S);
@@ -39,8 +39,8 @@ class AppPadding{
   static const EdgeInsets leftL = EdgeInsets.only(left: L);
   static const EdgeInsets rightL = EdgeInsets.only(right: L);
 
-  static const EdgeInsets topXL = EdgeInsets.only(top: XL);
-  static const EdgeInsets botXL = EdgeInsets.only(bottom: XL);
-  static const EdgeInsets leftXL = EdgeInsets.only(left: XL);
-  static const EdgeInsets rightXL = EdgeInsets.only(right: XL);
+  static const EdgeInsets topXL = EdgeInsets.only(top: xl);
+  static const EdgeInsets botXL = EdgeInsets.only(bottom: xl);
+  static const EdgeInsets leftXL = EdgeInsets.only(left: xl);
+  static const EdgeInsets rightXL = EdgeInsets.only(right: xl);
 }
