@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
+import '../widgets/bandmate_header.dart';
 
 enum _Readiness { ready, inProgress, notStarted }
 
@@ -47,14 +48,6 @@ class SongReadinessScreen extends StatelessWidget {
     return AppTexts.bodyL.copyWith(fontWeight: FontWeight.w700);
   }
 
-  void _geriDon(BuildContext context) {
-    final NavigatorState nav = Navigator.of(context);
-
-    if (nav.canPop()) {
-      nav.pop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -62,7 +55,8 @@ class SongReadinessScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildTopBar(context),
+          const BandmateHeader(),
+          _buildSectionTitle(),
           Expanded(child: _buildTableArea()),
           _buildLegendArea(),
         ],
@@ -70,31 +64,17 @@ class SongReadinessScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
+  Widget _buildSectionTitle() {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        AppPadding.S,
-        0,
+        AppPadding.L,
+        AppPadding.M,
         AppPadding.L,
         AppPadding.S,
       ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              _geriDon(context);
-            },
-            icon: const Icon(Icons.arrow_back),
-            color: AppColors.primary,
-            tooltip: 'Back',
-          ),
-          Expanded(
-            child: Text(
-              'Song Readiness — $bandName',
-              style: AppTexts.headS,
-            ),
-          ),
-        ],
+      child: Text(
+        'Song Readiness — $bandName',
+        style: AppTexts.headS,
       ),
     );
   }

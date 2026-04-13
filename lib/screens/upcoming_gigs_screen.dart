@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
+import '../widgets/bandmate_header.dart';
 
 class _GigItem {
   const _GigItem({
@@ -93,6 +94,7 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const BandmateHeader(),
           _buildSectionTitle(),
           _buildSearchRow(),
           Expanded(child: _buildGigList(ekrandaGosterilecek)),
