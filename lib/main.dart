@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'utils/colors.dart';
 
+import 'screens/bandmate_shell.dart';
+
 void main() {
-  runApp(const MyApp());
+  runApp(const BandmateApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BandmateApp extends StatelessWidget {
+  const BandmateApp({super.key});
 
   @override
   Widget build(BuildContext context) {
