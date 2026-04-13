@@ -183,10 +183,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: AppColors.gray,
                             border: Border.all(color: AppColors.black),
                           ),
-                          child: const Icon(
-                            Icons.person_outline,
-                            size: 48,
-                            color: AppColors.black,
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset(
+                            'assets/images/ahmetkaya.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
                         const SizedBox(width: 16),
