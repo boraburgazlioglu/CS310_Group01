@@ -5,15 +5,14 @@ import '../utils/text.dart';
 
 //appbar widget with logo and notifications button
 class BandmateHeader extends StatelessWidget implements PreferredSizeWidget {
-  const BandmateHeader({super.key});
+  const BandmateHeader({super.key,});
 
   @override
   Size get preferredSize => const Size.fromHeight(80);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
+    final bool showBackButton = Navigator.canPop(context);
     return Material(
       color: AppColors.surface,
       elevation: 0,
@@ -23,6 +22,13 @@ class BandmateHeader extends StatelessWidget implements PreferredSizeWidget {
           padding: AppPadding.allL,
           child: Row(
             children: [
+              if (showBackButton == true)
+                IconButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                ),
               _PickLogo(color: AppColors.primary),
               const SizedBox(width: AppPadding.M),
               Text(
@@ -32,7 +38,14 @@ class BandmateHeader extends StatelessWidget implements PreferredSizeWidget {
               const Spacer(),
               IconButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/notifications');
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                },
+                icon: const Icon(Icons.home_outlined, color: AppColors.primary),
+                tooltip: 'Home',
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/notifications');
                 },
                 icon: const Icon(Icons.notifications_none, color: AppColors.primary),
                 tooltip: 'Notifications',
