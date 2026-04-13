@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
-import 'utils/colors.dart';
-
 import 'screens/bandmate_shell.dart';
+import 'utils/colors.dart';
 
 void main() {
   runApp(const BandmateApp());
@@ -18,12 +17,12 @@ class BandmateApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
-        fontFamily: 'Limelight',
+        fontFamily: 'Merriweather',
       ),
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
-        // other routes will be added as we build each screen
+        '/home': (context) => const BandmateShell(),
       },
     );
   }

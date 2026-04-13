@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/bandmate_header.dart';
+import 'home_screen.dart';
 import 'song_readiness_screen.dart';
 import 'upcoming_gigs_screen.dart';
 
@@ -68,9 +69,9 @@ class _BandmateShellState extends State<BandmateShell> {
   Widget _buildBody() {
     switch (_index) {
       case 0:
-        return const SongReadinessScreen();
+        return const HomeScreen();
       case 1:
-        return _PlaceholderScreen(
+        return const _PlaceholderScreen(
           title: 'Schedule',
           message: 'Rehearsals and calendar will appear here.',
         );
