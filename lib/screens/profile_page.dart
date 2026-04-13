@@ -425,7 +425,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 width: 180,
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/login_screen', arguments: 'Logged out successfully');
+                    Navigator.pushNamed(context, '/login', arguments: 'Logged out successfully');
                   },
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(
