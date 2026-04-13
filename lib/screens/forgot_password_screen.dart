@@ -3,23 +3,21 @@ import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
     // free up memory when screen is closed
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -29,15 +27,18 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.surface,
-          title: Text('Success', style: AppTexts.headS),
-          content: Text('Welcome to BandMate!', style: AppTexts.bodyL),
+          title: Text('Email Sent!', style: AppTexts.headS),
+          content: Text(
+            'Password reset link has been sent to your email.',
+            style: AppTexts.bodyL,
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/home');
+                Navigator.pop(context);
               },
-              child: Text('Continue', style: AppTexts.button),
+              child: Text('Back to Login', style: AppTexts.button),
             ),
           ],
         ),
@@ -60,17 +61,23 @@ class _LoginScreenState extends State<LoginScreen> {
               // app logo
               Image.asset(
                 'assets/logo.png',
-                height: 120,
+                height: 100,
               ),
               const SizedBox(height: 12),
               Text(
-                'Organize your band, simplify your jam!',
-                style: AppTexts.bodyL,
+                'Forgot Password',
+                style: AppTexts.headM,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter your email and we will send you a reset link.',
+                style: AppTexts.bodyM,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
 
-              // login form
+              // form
               Container(
                 padding: AppPadding.allL,
                 decoration: BoxDecoration(
@@ -105,45 +112,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        style: AppTexts.bodyL,
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.lock, color: AppColors.primary),
-                          hintText: 'Password',
-                          hintStyle: AppTexts.bodyM,
-                          filled: true,
-                          fillColor: AppColors.background,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 8),
-
-                      // forgot password link
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/forgot-password');
-                          },
-                          child: Text('Forgot password?', style: AppTexts.bodyS),
-                        ),
-                      ),
                       const SizedBox(height: 16),
+
+                      // send reset link button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -155,24 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: Text('Login', style: AppTexts.button),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/signup');
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.primary),
-                            padding: AppPadding.vertM,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text('Sign Up', style: AppTexts.button),
+                          child: Text('Send Reset Link', style: AppTexts.button),
                         ),
                       ),
                     ],
@@ -181,13 +135,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 20),
 
-              // alternative sign up link
+              // back to login
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/signup');
+                  Navigator.pop(context);
                 },
                 child: Text(
-                  "Don't have an account? Sign up now!",
+                  'Back to Login',
                   style: AppTexts.bodyS.copyWith(
                     decoration: TextDecoration.underline,
                   ),
