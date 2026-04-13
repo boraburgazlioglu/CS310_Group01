@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
-import '../widgets/bandmate_header.dart';
 
 class _GigItem {
   const _GigItem({
@@ -90,17 +89,19 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
     final List<_GigItem> ekrandaGosterilecek = _filtrelenmisKonserler();
 
     return Material(
-      color: AppColors.background,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const BandmateHeader(),
-          _buildSectionTitle(),
-          _buildSearchRow(),
-          Expanded(child: _buildGigList(ekrandaGosterilecek)),
-        ],
-      ),
-    );
+      scaffold: Scaffold(
+        color: AppColors.backgroundDark,
+        appBar: BandmateHeader(),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildSectionTitle(),
+            _buildSearchRow(),
+            Expanded(child: _buildGigList(ekrandaGosterilecek)),
+          ],
+        ),
+        bottomNavigationBar: BotNavBar(currentIndex: 1,),
+    ));
   }
 
   Widget _buildSectionTitle() {

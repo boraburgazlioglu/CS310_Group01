@@ -4,6 +4,7 @@ import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
 import '../widgets/bandmate_header.dart';
+import '../widgets/bot_nav_bar.dart';
 
 enum _Readiness { ready, inProgress, notStarted }
 
@@ -51,15 +52,18 @@ class SongReadinessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.background,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const BandmateHeader(),
-          _buildSectionTitle(),
-          Expanded(child: _buildTableArea()),
-          _buildLegendArea(),
-        ],
+      scaffold: Scaffold(
+        color: AppColors.backgroundDark,
+        appBar: BandmateHeader(),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildSectionTitle(),
+            Expanded(child: _buildTableArea()),
+            _buildLegendArea(),
+          ],
+        ),
+        bottomNavigationBar: BotNavBar(currentIndex: 3),
       ),
     );
   }
