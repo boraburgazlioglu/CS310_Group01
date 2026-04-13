@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
+import '../widgets/bandmate_header.dart';
+import '../widgets/bot_nav_bar.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,6 +20,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: const BandmateHeader(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: AppPadding.allL,
@@ -167,6 +170,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: const MyNavBar(currentIndex: -1),
     );
   }
 }

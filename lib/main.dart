@@ -12,11 +12,14 @@ class BandmateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: ProfilePage(),
+      home: HomeScreen(),
       routes: {
         '/notifications': (context) => const NotificationsPage(),
         '/gigs': (context) => const UpcomingGigsScreen(),
         '/home': (context) => const HomeScreen(),
+        '/profile': (context) => const ProfilePage(),
+        '/songs': (context) => const SongReadinessScreen(),
+        '/login': (context) => const LoginScreen(),
       },
     );
   }
