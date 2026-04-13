@@ -32,7 +32,7 @@ class BandmateHeader extends StatelessWidget implements PreferredSizeWidget {
               const Spacer(),
               IconButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
+                  Navigator.pushReplacementNamed(context, '/notifications');
                 },
                 icon: const Icon(Icons.notifications_none, color: AppColors.primary),
                 tooltip: 'Notifications',

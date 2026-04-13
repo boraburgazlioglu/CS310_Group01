@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
-import 'screens/bandmate_shell.dart';
-import 'utils/colors.dart';
+import '../screens/screens.dart';
 
 void main() {
   runApp(const BandmateApp());
@@ -13,17 +11,14 @@ class BandmateApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BandMate',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
-        fontFamily: 'Merriweather',
-      ),
-      initialRoute: '/login',
+      home: ProfilePage(),
       routes: {
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const BandmateShell(),
+        '/notifications': (context) => const NotificationsPage(),
+        '/gigs': (context) => const UpcomingGigsScreen(),
+        '/home': (context) => const HomeScreen(),
       },
     );
   }
 }
+
