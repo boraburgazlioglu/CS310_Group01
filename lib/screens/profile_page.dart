@@ -183,10 +183,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: AppColors.gray,
                             border: Border.all(color: AppColors.black),
                           ),
-                          child: const Icon(
-                            Icons.person_outline,
-                            size: 48,
-                            color: AppColors.black,
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset(
+                            'assets/images/ahmetkaya.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -425,7 +425,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 width: 180,
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/login_screen', arguments: 'Logged out successfully');
+                    Navigator.pushNamed(context, '/login', arguments: 'Logged out successfully');
                   },
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(
