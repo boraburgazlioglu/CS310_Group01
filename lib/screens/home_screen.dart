@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundDark,
       appBar: const BandmateHeader(),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -140,7 +140,7 @@ class HomeScreen extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) =>
                                   Container(
                                     height: 60,
-                                    color: AppColors.surface,
+                                    color: AppColors.background,
                                     child: Icon(Icons.image, color: AppColors.primary),
                                   ),
                             ),
@@ -186,7 +186,7 @@ class _SectionCard extends StatelessWidget {
       width: double.infinity,
       padding: AppPadding.allL,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
       ),
       child: child,

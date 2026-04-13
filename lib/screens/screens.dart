@@ -7,3 +7,5 @@ export 'notifications.dart';
 export 'profile_page.dart';
 export 'song_readiness_screen.dart';
 export 'upcoming_gigs_screen.dart';
+export 'expenses_screen.dart';
+export 'rehearsal_screen.dart';

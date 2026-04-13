@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
+import '../widgets/bandmate_header.dart';
+import '../widgets/bot_nav_bar.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -79,16 +81,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        title: Text(
-          'Expenses',
-          style: AppTexts.headS,
-        ),
-      ),
+      backgroundColor: AppColors.backgroundDark,
+      appBar: BandmateHeader(),
       body: SingleChildScrollView(
         padding: AppPadding.allXL,
         child: Column(
@@ -260,6 +254,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: MyNavBar(currentIndex: 2),
     );
   }
 }

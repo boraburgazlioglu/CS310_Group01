@@ -29,8 +29,6 @@ class MyNavBar extends StatelessWidget {
       case 4:
         Navigator.pushReplacementNamed(context, '/profile');
         break;
-      case 5:
-        break;
     }
   }
 

@@ -12,7 +12,7 @@ class BandmateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: LoginScreen(),
       routes: {
         '/notifications': (context) => const NotificationsPage(),
         '/gigs': (context) => const UpcomingGigsScreen(),
@@ -20,6 +20,8 @@ class BandmateApp extends StatelessWidget {
         '/profile': (context) => const ProfilePage(),
         '/songs': (context) => const SongReadinessScreen(),
         '/login': (context) => const LoginScreen(),
+        '/expenses': (context) => const ExpensesScreen(),
+        '/rehearsals': (context) => const RehearsalScreen(),
       },
     );
   }
