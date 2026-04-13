@@ -128,7 +128,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
         ),
       ),
-      bottomNavigationBar: const MyNavBar(currentIndex: 4),
+      bottomNavigationBar: const MyNavBar(currentIndex: -1),
     );
   }
 
