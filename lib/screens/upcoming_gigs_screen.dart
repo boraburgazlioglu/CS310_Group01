@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../utils/colors.dart';
+import '../utils/padding.dart';
+import '../utils/text.dart';
+
 class _GigItem {
   const _GigItem({
     required this.title,
@@ -58,7 +62,6 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final query = _search.text.trim().toLowerCase();
     final filtered = query.isEmpty
         ? _allGigs
@@ -66,146 +69,200 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
             .where((g) => g.title.toLowerCase().contains(query))
             .toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Text(
-            'Upcoming Gigs — ${UpcomingGigsScreen.bandName}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+    // Shell içinde Material altlığı; TextField + dolgulu butonlar için gerekli.
+    // Üst bar ve alt nav [BandmateShell] içinde — burada tekrarlanmaz.
+    return Material(
+      color: AppColors.background,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppPadding.L,
+              AppPadding.M,
+              AppPadding.L,
+              AppPadding.S,
+            ),
+            child: Text(
+              'Upcoming Gigs — ${UpcomingGigsScreen.bandName}',
+              style: AppTexts.headS,
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _search,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Search',
-                    prefixIcon: const Icon(Icons.search),
-                    isDense: true,
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                onPressed: () {},
-                icon: const Icon(Icons.filter_list),
-                tooltip: 'Filter',
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final g = filtered[index];
-              return Card(
-                elevation: 0,
-                color: theme.colorScheme.surfaceContainerHigh,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: theme.dividerColor),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              width: 88,
-                              height: 72,
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              child: Icon(
-                                Icons.image_outlined,
-                                size: 36,
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        g.title,
-                                        style: theme.textTheme.titleSmall
-                                            ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    if (g.showMapIcon)
-                                      Icon(
-                                        Icons.map_outlined,
-                                        size: 20,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Date: ${g.date}',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                                Text(
-                                  'Time: ${g.time}',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                                Text(
-                                  'Location: ${g.location}',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppPadding.L,
+              vertical: AppPadding.M,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _search,
+                    onChanged: (_) => setState(() {}),
+                    style: AppTexts.bodyL,
+                    cursorColor: AppColors.primary,
+                    decoration: InputDecoration(
+                      hintText: 'Search',
+                      hintStyle: AppTexts.bodyM,
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.tonal(
-                          onPressed: () {},
-                          child: const Text('View Details'),
+                      isDense: true,
+                      filled: true,
+                      fillColor: AppColors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.35),
                         ),
                       ),
-                    ],
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: AppPadding.L,
+                        vertical: AppPadding.M,
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
+                SizedBox(width: AppPadding.M),
+                IconButton(
+                  style: IconButton.styleFrom(
+                    backgroundColor:
+                        AppColors.widgetLight.withValues(alpha: 0.35),
+                    foregroundColor: AppColors.primary,
+                  ),
+                  onPressed: () {},
+                  icon: const Icon(Icons.filter_list),
+                  tooltip: 'Filter',
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.fromLTRB(
+                AppPadding.L,
+                0,
+                AppPadding.L,
+                88,
+              ),
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => SizedBox(height: AppPadding.M),
+              itemBuilder: (context, index) {
+                final g = filtered[index];
+                return Card(
+                  elevation: 2,
+                  color: AppColors.surface,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: AppPadding.allM,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                width: 88,
+                                height: 72,
+                                color: AppColors.widgetLight.withValues(
+                                  alpha: 0.25,
+                                ),
+                                child: Icon(
+                                  Icons.image_outlined,
+                                  size: 36,
+                                  color: AppColors.widgetDark,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: AppPadding.M),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          g.title,
+                                          style: AppTexts.bodyL.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      if (g.showMapIcon)
+                                        Icon(
+                                          Icons.map_outlined,
+                                          size: 20,
+                                          color: AppColors.primary,
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: AppPadding.S),
+                                  Text(
+                                    'Date: ${g.date}',
+                                    style: AppTexts.bodyM,
+                                  ),
+                                  Text(
+                                    'Time: ${g.time}',
+                                    style: AppTexts.bodyM,
+                                  ),
+                                  Text(
+                                    'Location: ${g.location}',
+                                    style: AppTexts.bodyS,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: AppPadding.M),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.white,
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppPadding.M,
+                                horizontal: AppPadding.L,
+                              ),
+                            ),
+                            onPressed: () {},
+                            child: Text('View Details', style: AppTexts.button),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
