@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/rehearsal_model.dart';
+import '../providers/auth_provider.dart';
 import '../services/rehearsal_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
@@ -26,7 +28,6 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   final TextEditingController _notesController = TextEditingController();
 
   final String _bandId = 'group1';
-  final String _createdBy = 'Idris';
 
   final List<Map<String, String>> _members = [
     {'name': 'Umit Berke Polat', 'status': 'Available'},
@@ -269,41 +270,41 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
       location: _locationController.text.trim(),
       notes: _notesController.text.trim(),
       bandId: _bandId,
-      createdBy: _createdBy,
+      createdBy: context.read<AuthProvider>().createdByForFirestore,
     );
 
-      _dateController.clear();
-      _startTimeController.clear();
-      _endTimeController.clear();
-      _locationController.clear();
-      _notesController.clear();
+    _dateController.clear();
+    _startTimeController.clear();
+    _endTimeController.clear();
+    _locationController.clear();
+    _notesController.clear();
 
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text(
-            'Success',
-            style: AppTexts.headS,
-          ),
-          content: Text(
-            'Rehearsal saved to Firestore.',
-            style: AppTexts.bodyL,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-              },
-              child: Text(
-                'OK',
-                style: AppTexts.button,
-              ),
-            ),
-          ],
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Success',
+          style: AppTexts.headS,
         ),
-      );
+        content: Text(
+          'Rehearsal saved to Firestore.',
+          style: AppTexts.bodyL,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+            },
+            child: Text(
+              'OK',
+              style: AppTexts.button,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _getStatusColor(String status) {

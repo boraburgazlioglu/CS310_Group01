@@ -6,6 +6,7 @@ import '../utils/padding.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/expense_provider.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -23,7 +24,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   // placeholder until auth is integrated
   final String _bandId = 'group1';
-  final String _createdBy = 'Idris';
 
   @override
   void didChangeDependencies() {
@@ -58,7 +58,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         item: item,
         amount: amount,
         bandId: _bandId,
-        createdBy: _createdBy,
+        createdBy:
+            context.read<AuthProvider>().createdByForFirestore,
       );
 
       _amountController.clear();

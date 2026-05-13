@@ -28,6 +28,26 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isLoggedIn => _user != null;
 
+  /// Firestore `createdBy` / demo alanları için: önce ad, yoksa e-posta, yoksa uid.
+  String get createdByForFirestore {
+    final u = _user;
+    if (u == null) return 'guest';
+    final n = u.displayName?.trim();
+    if (n != null && n.isNotEmpty) return n;
+    final e = u.email?.trim();
+    if (e != null && e.isNotEmpty) return e;
+    return u.uid;
+  }
+
+  /// Profil başlığı için kısa görünen ad
+  String get displayNameOrEmail {
+    final u = _user;
+    if (u == null) return 'Misafir';
+    final n = u.displayName?.trim();
+    if (n != null && n.isNotEmpty) return n;
+    return u.email ?? u.uid;
+  }
+
   Future<bool> signIn({
     required String email,
     required String password,
@@ -51,6 +71,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signUp({
     required String email,
     required String password,
+    String? displayName,
   }) async {
     _errorMessage = null;
 
@@ -58,6 +79,7 @@ class AuthProvider extends ChangeNotifier {
       await _authService.signUp(
         email: email,
         password: password,
+        displayName: displayName,
       );
 
       return true;
