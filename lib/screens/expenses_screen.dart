@@ -1,12 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/expense_model.dart';
-import '../services/expense_service.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
+import 'package:provider/provider.dart';
+import '../providers/expense_provider.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -19,11 +19,25 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _itemController = TextEditingController();
-  final ExpenseService _expenseService = ExpenseService();
+  bool _isListening = false;
 
   // placeholder until auth is integrated
   final String _bandId = 'group1';
   final String _createdBy = 'Idris';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_isListening) {
+      Provider.of<ExpenseProvider>(
+        context,
+        listen: false,
+      ).listenToExpenses(_bandId);
+
+      _isListening = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -37,8 +51,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       final amount = double.parse(_amountController.text.trim());
       final item = _itemController.text.trim();
 
-      // save to firestore
-      _expenseService.addExpense(
+      Provider.of<ExpenseProvider>(
+        context,
+        listen: false,
+      ).addExpense(
         item: item,
         amount: amount,
         bandId: _bandId,
@@ -66,7 +82,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _deleteExpense(String id) {
-    _expenseService.deleteExpense(id);
+    Provider.of<ExpenseProvider>(
+      context,
+      listen: false,
+    ).deleteExpense(id);
   }
 
   void _showEditDialog(Expense expense) {
@@ -122,11 +141,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           TextButton(
             onPressed: () {
               // update in firestore
-              _expenseService.updateExpense(
+              Provider.of<ExpenseProvider>(
+                context,
+                listen: false,
+              ).updateExpense(
                 id: expense.id,
                 item: itemController.text.trim(),
-                amount: double.tryParse(amountController.text.trim()) ??
-                    expense.amount,
+                amount: double.tryParse(amountController.text.trim()) ?? expense.amount,
               );
               Navigator.pop(ctx);
             },
@@ -235,16 +256,27 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             const SizedBox(height: 12),
 
             // real-time expense list from firestore
-            StreamBuilder<QuerySnapshot>(
-              stream: _expenseService.getExpenses(_bandId),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+
+            Consumer<ExpenseProvider>(
+              builder: (context, expenseProvider, child) {
+                if (expenseProvider.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (expenseProvider.errorMessage != null) {
+                  return Text(
+                    expenseProvider.errorMessage!,
+                    style: AppTexts.bodyM,
+                  );
+                }
+
+                if (expenseProvider.expenses.isEmpty) {
                   return Text('No expenses yet.', style: AppTexts.bodyM);
                 }
 
-                final expenses = snapshot.data!.docs
-                    .map((doc) => Expense.fromFirestore(doc))
-                    .toList();
+                final expenses = expenseProvider.expenses;
 
                 return ListView.builder(
                   shrinkWrap: true,
@@ -252,6 +284,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   itemCount: expenses.length,
                   itemBuilder: (context, index) {
                     final expense = expenses[index];
+
                     return Card(
                       color: AppColors.surface,
                       margin: const EdgeInsets.only(bottom: 12),
@@ -267,13 +300,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // edit button
                             IconButton(
                               onPressed: () => _showEditDialog(expense),
                               icon: const Icon(Icons.edit_outlined),
                               color: AppColors.primary,
                             ),
-                            // delete button
                             IconButton(
                               onPressed: () => _deleteExpense(expense.id),
                               icon: const Icon(Icons.delete_outline),
