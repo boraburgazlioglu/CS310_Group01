@@ -260,6 +260,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: Image.asset(
                             'assets/images/ahmetkaya.png',
                             fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.person,
+                                size: 48,
+                                color: AppColors.widgetDark,
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(width: 16),

@@ -74,6 +74,13 @@ class _SignupScreenState extends State<SignupScreen> {
               Image.asset(
                 'assets/logo.png',
                 height: 100,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.music_note,
+                    size: 72,
+                    color: AppColors.primary,
+                  );
+                },
               ),
               const SizedBox(height: 8),
               Text(
