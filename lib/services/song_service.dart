@@ -32,7 +32,6 @@ class SongService {
   Stream<List<Song>> getSongs(String bandId) {
     return _songs
         .where('bandId', isEqualTo: bandId)
-        .orderBy('createdAt', descending: false)
         .snapshots()
         .map((snapshot) =>
         snapshot.docs.map((doc) => Song.fromFirestore(doc)).toList());
@@ -42,7 +41,7 @@ class SongService {
   Future<void> updateReadiness({
     required String songId,
     required String memberId,
-    required String status, // 'ready', 'inProgress', 'notStarted'
+    required String status,
   }) async {
     await _songs.doc(songId).update({
       'memberReadiness.$memberId': status,
