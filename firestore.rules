@@ -36,25 +36,30 @@ service cloud.firestore {
     }
 
     match /expenses/{expenseId} {
-      allow read, delete: if isGroup1ExistingData();
+      // List queries: signed-in read; writes still scoped to group1.
+      allow read: if signedIn();
+      allow delete: if isGroup1ExistingData();
       allow create: if isGroup1NewData();
       allow update: if isGroup1UpdatedData();
     }
 
     match /gigs/{gigId} {
-      allow read, delete: if isGroup1ExistingData();
+      allow read: if signedIn();
+      allow delete: if isGroup1ExistingData();
       allow create: if isGroup1NewData();
       allow update: if isGroup1UpdatedData();
     }
 
     match /rehearsals/{rehearsalId} {
-      allow read, delete: if isGroup1ExistingData();
+      allow read: if signedIn();
+      allow delete: if isGroup1ExistingData();
       allow create: if isGroup1NewData();
       allow update: if isGroup1UpdatedData();
     }
 
     match /songs/{songId} {
-      allow read, delete: if isGroup1ExistingData();
+      allow read: if signedIn();
+      allow delete: if isGroup1ExistingData();
       allow create: if isGroup1NewData();
       allow update: if isGroup1UpdatedData();
     }
