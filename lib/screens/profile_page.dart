@@ -4,6 +4,8 @@ import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 // class for schedule time slots
 class AvailableSlot {
@@ -424,8 +426,17 @@ class _ProfilePageState extends State<ProfilePage> {
               SizedBox(
                 width: 180,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/login', arguments: 'Logged out successfully');
+                  onPressed: () async {
+                    await context.read<AuthProvider>().signOut();
+
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/auth',
+                          (route) => false,
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(
