@@ -24,7 +24,8 @@ class Rehearsal {
   });
 
   factory Rehearsal.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final raw = doc.data();
+    final data = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
     return Rehearsal(
       id: doc.id,
       date: data['date'] ?? '',

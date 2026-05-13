@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../models/rehearsal_model.dart';
@@ -465,25 +464,32 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
               style: AppTexts.headS,
             ),
             const SizedBox(height: 12),
-            StreamBuilder<QuerySnapshot>(
+            StreamBuilder<List<Rehearsal>>(
               stream: _rehearsalService.getRehearsals(_bandId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Text(
-                    'Could not load rehearsals.',
+                    'Provalar yüklenemedi: ${snapshot.error}',
                     style: AppTexts.bodyM.copyWith(color: AppColors.error),
                   );
                 }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                final items = snapshot.data ?? [];
+                if (items.isEmpty) {
                   return Text(
                     'No rehearsals yet.',
                     style: AppTexts.bodyM,
                   );
                 }
-
-                final items = snapshot.data!.docs
-                    .map((doc) => Rehearsal.fromFirestore(doc))
-                    .toList();
 
                 return ListView.builder(
                   shrinkWrap: true,

@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../models/rehearsal_model.dart';
+
 class RehearsalService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -26,11 +28,24 @@ class RehearsalService {
     });
   }
 
-  Stream<QuerySnapshot> getRehearsals(String bandId) {
+  // Avoid where + orderBy on Firestore without a composite index (same issue as gigs).
+  Stream<List<Rehearsal>> getRehearsals(String bandId) {
     return _rehearsals
         .where('bandId', isEqualTo: bandId)
-        .orderBy('createdAt', descending: true)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) {
+      final list =
+          snapshot.docs.map((doc) => Rehearsal.fromFirestore(doc)).toList();
+      list.sort((a, b) {
+        final at = a.createdAt;
+        final bt = b.createdAt;
+        if (at == null && bt == null) return 0;
+        if (at == null) return 1;
+        if (bt == null) return -1;
+        return bt.compareTo(at);
+      });
+      return list;
+    });
   }
 
   Future<void> deleteRehearsal(String id) async {
