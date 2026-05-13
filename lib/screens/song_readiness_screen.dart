@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/song_model.dart';
+import '../providers/auth_provider.dart';
 import '../services/song_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
@@ -22,7 +24,6 @@ class _SongReadinessScreenState extends State<SongReadinessScreen> {
 
   // placeholder until auth is integrated
   final String _bandId = 'group1';
-  final String _createdBy = 'Idris';
   final List<String> _members = ['Idris', 'Bora', 'Taha', 'Berke'];
 
   @override
@@ -63,7 +64,8 @@ class _SongReadinessScreenState extends State<SongReadinessScreen> {
                 _songService.addSong(
                   title: _titleController.text.trim(),
                   bandId: _bandId,
-                  createdBy: _createdBy,
+                  createdBy:
+                      ctx.read<AuthProvider>().createdByForFirestore,
                   memberIds: _members,
                 );
                 _titleController.clear();
