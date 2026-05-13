@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/rehearsal_model.dart';
 
@@ -28,23 +29,36 @@ class RehearsalService {
     });
   }
 
-  // Avoid where + orderBy on Firestore without a composite index (same issue as gigs).
+  // Avoid where + orderBy without a composite index (same pattern as gigs).
+  // Wait for Firebase Auth before attaching Firestore snapshots — otherwise the
+  // first snapshot often runs as unauthenticated and rules return permission-denied.
   Stream<List<Rehearsal>> getRehearsals(String bandId) {
-    return _rehearsals
-        .where('bandId', isEqualTo: bandId)
-        .snapshots()
-        .map((snapshot) {
-      final list =
-          snapshot.docs.map((doc) => Rehearsal.fromFirestore(doc)).toList();
-      list.sort((a, b) {
-        final at = a.createdAt;
-        final bt = b.createdAt;
-        if (at == null && bt == null) return 0;
-        if (at == null) return 1;
-        if (bt == null) return -1;
-        return bt.compareTo(at);
+    return FirebaseAuth.instance.authStateChanges().asyncExpand((user) {
+      if (user == null) {
+        return Stream<List<Rehearsal>>.value(<Rehearsal>[]);
+      }
+      return _rehearsals
+          .where('bandId', isEqualTo: bandId)
+          .snapshots()
+          .map((snapshot) {
+        final list = <Rehearsal>[];
+        for (final doc in snapshot.docs) {
+          try {
+            list.add(Rehearsal.fromFirestore(doc));
+          } catch (_) {
+            // skip malformed legacy docs so one bad row does not kill the stream
+          }
+        }
+        list.sort((a, b) {
+          final at = a.createdAt;
+          final bt = b.createdAt;
+          if (at == null && bt == null) return 0;
+          if (at == null) return 1;
+          if (bt == null) return -1;
+          return bt.compareTo(at);
+        });
+        return list;
       });
-      return list;
     });
   }
 
