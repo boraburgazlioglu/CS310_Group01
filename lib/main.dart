@@ -1,9 +1,12 @@
 import 'package:cs310_2026/screens/expenses_screen.dart';
 import 'package:cs310_2026/screens/rehearsal_screen.dart';
+import 'package:cs310_2026/widgets/auth_gate.dart';
 import 'package:flutter/material.dart';
 import '../screens/screens.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 
 void main() async {
@@ -13,7 +16,17 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const BandmateApp());
+  //app wrapped in multiprovider with changeNotifier
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(),
+        ),
+      ],
+      child: const BandmateApp(),
+    ),
+  );
 }
 
 class BandmateApp extends StatelessWidget {
@@ -23,7 +36,7 @@ class BandmateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: const AuthGate(),
       routes: {
         '/notifications': (context) => const NotificationsPage(),
         '/gigs': (context) => const UpcomingGigsScreen(),
@@ -33,8 +46,9 @@ class BandmateApp extends StatelessWidget {
         '/rehearsals': (context) => const RehearsalScreen(),
         '/expenses': (context) => const ExpensesScreen(),
         '/login': (context) => const LoginScreen(),
-        '/forgotPass': (context) => const ForgotPasswordScreen(),
+        '/forgotPass': (context) => const ForgotPasswordScreen(),//dummy for now
         '/signup': (context) => const SignupScreen(),
+        '/auth': (context) => const AuthGate(),
       },
     );
   }
