@@ -1,41 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../utils/text.dart';
+import 'package:provider/provider.dart';
+
+import '../models/profile_availability_model.dart';
+import '../providers/auth_provider.dart';
+import '../services/profile_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
+import '../utils/text.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-
-// class for schedule time slots
-class AvailableSlot {
-  final int year;
-  final int month;
-  final int day;
-  final int startHour;
-  final int startMinute;
-  final int endHour;
-  final int endMinute;
-
-  AvailableSlot({
-    required this.year,
-    required this.month,
-    required this.day,
-    required this.startHour,
-    required this.startMinute,
-    required this.endHour,
-    required this.endMinute,
-  });
-}
-
-// user input controllers
-final TextEditingController _yearController = TextEditingController();
-final TextEditingController _monthController = TextEditingController();
-final TextEditingController _dayController = TextEditingController();
-final TextEditingController _startHourController = TextEditingController();
-final TextEditingController _startMinuteController = TextEditingController();
-final TextEditingController _endHourController = TextEditingController();
-final TextEditingController _endMinuteController = TextEditingController();
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -45,47 +19,143 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final ProfileService _profileService = ProfileService();
 
-  //placeholder data for info rows
+  final TextEditingController _yearController = TextEditingController();
+  final TextEditingController _monthController = TextEditingController();
+  final TextEditingController _dayController = TextEditingController();
+  final TextEditingController _startHourController = TextEditingController();
+  final TextEditingController _startMinuteController = TextEditingController();
+  final TextEditingController _endHourController = TextEditingController();
+  final TextEditingController _endMinuteController = TextEditingController();
+
+  // placeholder data for info rows
   final String userName = 'idris';
   final String email = 'idrisimamoglu@sabanci.uni';
   final List<String> roles = ['manager', 'guitarist'];
   final List<String> groups = ['band1', 'band2'];
 
-  final List<AvailableSlot> availableSlots = [
-    AvailableSlot(
-      year: 2026,
-      month: 04,
-      day: 14,
-      startHour: 18,
-      startMinute: 00,
-      endHour: 20,
-      endMinute: 48
-    ),
-    AvailableSlot(
-        year: 2026,
-        month: 04,
-        day: 15,
-        startHour: 12,
-        startMinute: 00,
-        endHour: 23,
-        endMinute: 59,
-    ),
-    AvailableSlot(
-        year: 2026,
-        month: 04,
-        day: 16,
-        startHour: 15,
-        startMinute: 05,
-        endHour: 20,
-        endMinute: 05
-    ),
-  ];
+  @override
+  void dispose() {
+    _yearController.dispose();
+    _monthController.dispose();
+    _dayController.dispose();
+    _startHourController.dispose();
+    _startMinuteController.dispose();
+    _endHourController.dispose();
+    _endMinuteController.dispose();
+    super.dispose();
+  }
 
-  void _removeSlot(int index) {
-    setState(() {
-      availableSlots.removeAt(index);
-    });
+  void _deleteSlot(String id) {
+    _profileService.deleteSlot(id);
+  }
+
+  void _showEditSlotDialog(ProfileAvailabilitySlot slot) {
+    final yearController =
+        TextEditingController(text: slot.year.toString());
+    final monthController =
+        TextEditingController(text: slot.month.toString());
+    final dayController = TextEditingController(text: slot.day.toString());
+    final startHourController =
+        TextEditingController(text: slot.startHour.toString());
+    final startMinuteController =
+        TextEditingController(text: slot.startMinute.toString());
+    final endHourController =
+        TextEditingController(text: slot.endHour.toString());
+    final endMinuteController =
+        TextEditingController(text: slot.endMinute.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Edit time slot', style: AppTexts.headS),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: yearController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Year'),
+              ),
+              TextField(
+                controller: monthController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Month'),
+              ),
+              TextField(
+                controller: dayController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Day'),
+              ),
+              TextField(
+                controller: startHourController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Start hour'),
+              ),
+              TextField(
+                controller: startMinuteController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Start min'),
+              ),
+              TextField(
+                controller: endHourController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'End hour'),
+              ),
+              TextField(
+                controller: endMinuteController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'End min'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppTexts.button),
+          ),
+          TextButton(
+            onPressed: () {
+              final year = int.tryParse(yearController.text.trim());
+              final month = int.tryParse(monthController.text.trim());
+              final day = int.tryParse(dayController.text.trim());
+              final startHour =
+                  int.tryParse(startHourController.text.trim());
+              final startMinute =
+                  int.tryParse(startMinuteController.text.trim());
+              final endHour = int.tryParse(endHourController.text.trim());
+              final endMinute = int.tryParse(endMinuteController.text.trim());
+              if (year == null ||
+                  month == null ||
+                  day == null ||
+                  startHour == null ||
+                  startMinute == null ||
+                  endHour == null ||
+                  endMinute == null) {
+                Navigator.pop(ctx);
+                return;
+              }
+              _profileService.updateSlot(
+                id: slot.id,
+                year: year,
+                month: month,
+                day: day,
+                startHour: startHour,
+                startMinute: startMinute,
+                endHour: endHour,
+                endMinute: endMinute,
+              );
+              Navigator.pop(ctx);
+            },
+            child: Text('Save', style: AppTexts.button),
+          ),
+        ],
+      ),
+    );
   }
 
   //shows the incorrect inputs in a snack bar
@@ -126,31 +196,32 @@ class _ProfilePageState extends State<ProfilePage> {
     if (startMinute < 0 || startMinute > 59) {_showError('Minute has to be in range 0-60!'); return;}
     if (endMinute < 0 || endMinute > 59) {_showError('Minute has to be in range 0-60!'); return;}
 
-    setState(() {
-      availableSlots.add(
-        AvailableSlot(
-          year: year,
-          month: month,
-          day: day,
-          startHour: startHour,
-          startMinute: startMinute,
-          endHour: endHour,
-          endMinute: endMinute,
-        ),
-      );
+    final userId = context.read<AuthProvider>().user?.uid ?? 'guest';
 
-      _yearController.clear();
-      _monthController.clear();
-      _dayController.clear();
-      _startHourController.clear();
-      _startMinuteController.clear();
-      _endHourController.clear();
-      _endMinuteController.clear();
-    });
+    _profileService.addSlot(
+      year: year,
+      month: month,
+      day: day,
+      startHour: startHour,
+      startMinute: startMinute,
+      endHour: endHour,
+      endMinute: endMinute,
+      userId: userId,
+    );
+
+    _yearController.clear();
+    _monthController.clear();
+    _dayController.clear();
+    _startHourController.clear();
+    _startMinuteController.clear();
+    _endHourController.clear();
+    _endMinuteController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final userId = context.watch<AuthProvider>().user?.uid ?? 'guest';
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: const BandmateHeader(),
@@ -374,50 +445,84 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       Text('Available Time Slots', style: AppTexts.headS),
 
-                      if (availableSlots.isEmpty)
-                        Text(
-                          'No time slots added yet.',
-                          style: AppTexts.bodyM.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        )
-                      else
-                        ...List.generate(
-                          availableSlots.length,
-                              (index) {
-                            final slot = availableSlots[index];
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: AppPadding.S),
-                              child: Card(
-                                color: AppColors.surface,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(color: AppColors.gray),
-                                ),
-                                child: ListTile(
-                                  leading: const Icon(Icons.schedule_outlined),
-                                  title: Text(
-                                    '${slot.day.toString().padLeft(2, '0')}/${slot.month.toString().padLeft(2, '0')}/${slot.year}',
-                                    style: AppTexts.bodyM.copyWith(
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    '${slot.startHour.toString().padLeft(2, '0')}:${slot.startMinute.toString().padLeft(2, '0')} - ${slot.endHour.toString().padLeft(2, '0')}:${slot.endMinute.toString().padLeft(2, '0')}',
-                                    style: AppTexts.bodyM.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  trailing: IconButton(
-                                    onPressed: () => _removeSlot(index),
-                                    icon: const Icon(Icons.delete_outline),
-                                  ),
-                                ),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: _profileService.getSlots(userId),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Text(
+                              'Could not load slots.',
+                              style: AppTexts.bodyM.copyWith(
+                                color: AppColors.error,
                               ),
                             );
-                          },
-                        ),
+                          }
+                          if (!snapshot.hasData ||
+                              snapshot.data!.docs.isEmpty) {
+                            return Text(
+                              'No time slots added yet.',
+                              style: AppTexts.bodyM.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            );
+                          }
+
+                          final slots = snapshot.data!.docs
+                              .map((doc) =>
+                                  ProfileAvailabilitySlot.fromFirestore(doc))
+                              .toList();
+
+                          return Column(
+                            children: slots.map((slot) {
+                              return Padding(
+                                padding:
+                                    EdgeInsets.only(bottom: AppPadding.S),
+                                child: Card(
+                                  color: AppColors.surface,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: const BorderSide(
+                                        color: AppColors.gray),
+                                  ),
+                                  child: ListTile(
+                                    leading:
+                                        const Icon(Icons.schedule_outlined),
+                                    title: Text(
+                                      '${slot.day.toString().padLeft(2, '0')}/${slot.month.toString().padLeft(2, '0')}/${slot.year}',
+                                      style: AppTexts.bodyM.copyWith(
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '${slot.startHour.toString().padLeft(2, '0')}:${slot.startMinute.toString().padLeft(2, '0')} - ${slot.endHour.toString().padLeft(2, '0')}:${slot.endMinute.toString().padLeft(2, '0')}',
+                                      style: AppTexts.bodyM.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          onPressed: () =>
+                                              _showEditSlotDialog(slot),
+                                          icon: const Icon(Icons.edit_outlined),
+                                          color: AppColors.primary,
+                                        ),
+                                        IconButton(
+                                          onPressed: () =>
+                                              _deleteSlot(slot.id),
+                                          icon:
+                                              const Icon(Icons.delete_outline),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
