@@ -21,7 +21,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   final TextEditingController _itemController = TextEditingController();
   final ExpenseService _expenseService = ExpenseService();
 
-  // placeholder band and user info until auth is integrated
+  // placeholder until auth is integrated
   final String _bandId = 'group1';
   final String _createdBy = 'Idris';
 
@@ -238,9 +238,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             StreamBuilder<QuerySnapshot>(
               stream: _expenseService.getExpenses(_bandId),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Text('No expenses yet.', style: AppTexts.bodyM);
                 }
