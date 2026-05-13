@@ -39,7 +39,21 @@ class AuthProvider extends ChangeNotifier {
     return u.uid;
   }
 
-  /// Profil başlığı için kısa görünen ad
+  /// Profilde "Name" satırı: önce Firebase `displayName`; yoksa e-postanın @ öncesi (tam e-postayı tekrarlamamak için).
+  String get profileDisplayName {
+    final u = _user;
+    if (u == null) return '—';
+    final n = u.displayName?.trim();
+    if (n != null && n.isNotEmpty) return n;
+    final e = u.email?.trim();
+    if (e != null && e.contains('@')) {
+      return e.split('@').first;
+    }
+    if (e != null && e.isNotEmpty) return e;
+    return u.uid;
+  }
+
+  /// Karşılama / avatar yedek metni (tam e-posta veya isim).
   String get displayNameOrEmail {
     final u = _user;
     if (u == null) return 'Misafir';
