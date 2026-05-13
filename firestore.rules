@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isGroup1ExistingData() {
+      return signedIn() && resource.data.bandId == "group1";
+    }
+
+    function isGroup1NewData() {
+      return signedIn() && request.resource.data.bandId == "group1";
+    }
+
+    function isGroup1UpdatedData() {
+      return signedIn()
+        && resource.data.bandId == "group1"
+        && request.resource.data.bandId == "group1";
+    }
+
+    function isOwnExistingSlot() {
+      return signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isOwnNewSlot() {
+      return signedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    function isOwnUpdatedSlot() {
+      return signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /expenses/{expenseId} {
+      allow read, delete: if isGroup1ExistingData();
+      allow create: if isGroup1NewData();
+      allow update: if isGroup1UpdatedData();
+    }
+
+    match /gigs/{gigId} {
+      allow read, delete: if isGroup1ExistingData();
+      allow create: if isGroup1NewData();
+      allow update: if isGroup1UpdatedData();
+    }
+
+    match /rehearsals/{rehearsalId} {
+      allow read, delete: if isGroup1ExistingData();
+      allow create: if isGroup1NewData();
+      allow update: if isGroup1UpdatedData();
+    }
+
+    match /songs/{songId} {
+      allow read, delete: if isGroup1ExistingData();
+      allow create: if isGroup1NewData();
+      allow update: if isGroup1UpdatedData();
+    }
+
+    match /profile_availability_slots/{slotId} {
+      allow read, delete: if isOwnExistingSlot();
+      allow create: if isOwnNewSlot();
+      allow update: if isOwnUpdatedSlot();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
