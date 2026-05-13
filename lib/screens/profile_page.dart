@@ -160,24 +160,100 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  /// `23.00` / `12` gibi; sadece tam sayı kısmını alır.
+  int? _parseWholeNumber(String raw) {
+    var s = raw.trim().replaceAll(',', '.');
+    if (s.isEmpty) return null;
+    final dot = s.indexOf('.');
+    if (dot != -1) {
+      s = s.substring(0, dot);
+    }
+    return int.tryParse(s);
+  }
+
+  /// Ay: `1`–`12`, `January` / `Jan`, `Ocak` vb.
+  int? _parseMonthInput(String raw) {
+    final t = raw.trim().toLowerCase();
+    if (t.isEmpty) return null;
+    final n = int.tryParse(t);
+    if (n != null && n >= 1 && n <= 12) return n;
+    const months = <String, int>{
+      'january': 1,
+      'jan': 1,
+      'february': 2,
+      'feb': 2,
+      'march': 3,
+      'mar': 3,
+      'april': 4,
+      'apr': 4,
+      'may': 5,
+      'june': 6,
+      'jun': 6,
+      'july': 7,
+      'jul': 7,
+      'august': 8,
+      'aug': 8,
+      'september': 9,
+      'sep': 9,
+      'sept': 9,
+      'october': 10,
+      'oct': 10,
+      'november': 11,
+      'nov': 11,
+      'december': 12,
+      'dec': 12,
+      'ocak': 1,
+      'şubat': 2,
+      'subat': 2,
+      'mart': 3,
+      'nisan': 4,
+      'mayıs': 5,
+      'mayis': 5,
+      'haziran': 6,
+      'temmuz': 7,
+      'ağustos': 8,
+      'agustos': 8,
+      'eylül': 9,
+      'eylul': 9,
+      'ekim': 10,
+      'kasım': 11,
+      'kasim': 11,
+      'aralık': 12,
+      'aralik': 12,
+    };
+    return months[t];
+  }
+
   // adds the time slots to the card list, parses the texts to integers for calculations later on
   void _addSlot() {
-    final year = int.tryParse(_yearController.text.trim());
-    final month = int.tryParse(_monthController.text.trim());
-    final day = int.tryParse(_dayController.text.trim());
-    final startHour = int.tryParse(_startHourController.text.trim());
-    final startMinute = int.tryParse(_startMinuteController.text.trim());
-    final endHour = int.tryParse(_endHourController.text.trim());
-    final endMinute = int.tryParse(_endMinuteController.text.trim());
+    final year = _parseWholeNumber(_yearController.text);
+    final month = _parseMonthInput(_monthController.text);
+    final day = _parseWholeNumber(_dayController.text);
+    final startHour = _parseWholeNumber(_startHourController.text);
+    final startMinute = _parseWholeNumber(_startMinuteController.text);
+    final endHour = _parseWholeNumber(_endHourController.text);
+    final endMinute = _parseWholeNumber(_endMinuteController.text);
 
-    if (year == null ||
-        month == null ||
-        day == null ||
-        startHour == null ||
-        startMinute == null ||
-        endHour == null ||
-        endMinute == null) {
-      _showError('Every input field must be filled.');
+    if (year == null) {
+      _showError('Yıl geçersiz. Örnek: 2026');
+      return;
+    }
+    if (month == null) {
+      _showError(
+          'Ay geçersiz. 1–12 sayı veya ay adı gir (örn. 5, January, Ocak).');
+      return;
+    }
+    if (day == null) {
+      _showError('Gün geçersiz. Örnek: 14');
+      return;
+    }
+    if (startHour == null || startMinute == null) {
+      _showError('Başlangıç saati/dakikası sayı olmalı (örn. 12 ve 0).');
+      return;
+    }
+    if (endHour == null || endMinute == null) {
+      _showError('Bitiş saati/dakikası sayı olmalı (örn. 23 ve 0).');
       return;
     }
 
@@ -219,7 +295,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
-    final displayName = auth.displayNameOrEmail;
+    final profileName = auth.profileDisplayName;
     final email = user?.email ?? '—';
     final photoUrl = user?.photoURL;
 
@@ -264,17 +340,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
                                     return _AvatarFallback(
-                                        label: displayName);
+                                        label: profileName);
                                   },
                                 )
-                              : _AvatarFallback(label: displayName),
+                              : _AvatarFallback(label: profileName),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _InfoRow(label: 'Name', value: displayName),
+                              _InfoRow(label: 'Name', value: profileName),
                               const SizedBox(height: 10),
                               _InfoRow(label: 'Email', value: email),
                             ],
@@ -341,9 +417,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           Expanded(
                             child: TextField(
                               controller: _monthController,
-                              keyboardType: TextInputType.number,
+                              keyboardType: TextInputType.text,
                               decoration: InputDecoration(
-                                hintText: 'Month',
+                                hintText: 'Ay (1-12 veya January)',
                                 filled: true,
                                 fillColor: AppColors.surface,
                                 border: OutlineInputBorder(

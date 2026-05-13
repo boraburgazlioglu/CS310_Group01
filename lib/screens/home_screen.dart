@@ -21,7 +21,7 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome, ${context.watch<AuthProvider>().displayNameOrEmail}',
+              'Welcome, ${context.watch<AuthProvider>().profileDisplayName}',
               style: AppTexts.headM,
             ),
             const SizedBox(height: 16),
