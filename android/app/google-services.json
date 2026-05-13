@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "289459066309",
-    "project_id": "cs310-project-4e016",
-    "storage_bucket": "cs310-project-4e016.firebasestorage.app"
+    "project_number": "385888874725",
+    "project_id": "bandmate-8831d",
+    "storage_bucket": "bandmate-8831d.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:289459066309:android:60e5842fdc0b7c49b767ac",
+        "mobilesdk_app_id": "1:385888874725:android:e40f97d1899fecd05a240c",
         "android_client_info": {
           "package_name": "com.example.cs310_2026"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCAUBUVvH7Q_MacZYD_QU2AOM3CrCEaGJY"
+          "current_key": "AIzaSyD81Ycg_CM4YxU6k-FZ1KIoGDaFeDkuP4Q"
         }
       ],
       "services": {
