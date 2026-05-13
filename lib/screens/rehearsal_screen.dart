@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
+import '../models/rehearsal_model.dart';
+import '../services/rehearsal_service.dart';
+import '../utils/colors.dart';
+import '../utils/padding.dart';
+import '../utils/text.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
-import 'package:flutter/material.dart';
-import '../utils/colors.dart';
-import '../utils/text.dart';
-import '../utils/padding.dart';
 
 class RehearsalScreen extends StatefulWidget {
   const RehearsalScreen({super.key});
@@ -14,11 +18,16 @@ class RehearsalScreen extends StatefulWidget {
 
 class _RehearsalScreenState extends State<RehearsalScreen> {
   final _formKey = GlobalKey<FormState>();
+  final RehearsalService _rehearsalService = RehearsalService();
 
   final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _startTimeController = TextEditingController();
+  final TextEditingController _endTimeController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+
+  final String _bandId = 'group1';
+  final String _createdBy = 'Idris';
 
   final List<Map<String, String>> _members = [
     {'name': 'Umit Berke Polat', 'status': 'Available'},
@@ -30,7 +39,8 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   @override
   void dispose() {
     _dateController.dispose();
-    _timeController.dispose();
+    _startTimeController.dispose();
+    _endTimeController.dispose();
     _locationController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -93,8 +103,158 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     return true;
   }
 
-  void _createRehearsal() {
+  void _deleteRehearsal(String id) {
+    _rehearsalService.deleteRehearsal(id);
+  }
+
+  void _showEditRehearsalDialog(Rehearsal rehearsal) {
+    final dateController = TextEditingController(text: rehearsal.date);
+    final startController =
+        TextEditingController(text: rehearsal.startTime);
+    final endController = TextEditingController(text: rehearsal.endTime);
+    final locationController =
+        TextEditingController(text: rehearsal.location);
+    final notesController = TextEditingController(text: rehearsal.notes);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Edit rehearsal', style: AppTexts.headS),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: dateController,
+                style: AppTexts.bodyL,
+                decoration: InputDecoration(
+                  hintText: 'dd/mm/yyyy',
+                  hintStyle: AppTexts.bodyM,
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: startController,
+                style: AppTexts.bodyL,
+                decoration: InputDecoration(
+                  hintText: 'Start xx:xx',
+                  hintStyle: AppTexts.bodyM,
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: endController,
+                style: AppTexts.bodyL,
+                decoration: InputDecoration(
+                  hintText: 'End xx:xx',
+                  hintStyle: AppTexts.bodyM,
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: locationController,
+                style: AppTexts.bodyL,
+                decoration: InputDecoration(
+                  hintText: 'Location',
+                  hintStyle: AppTexts.bodyM,
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: notesController,
+                style: AppTexts.bodyL,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Notes',
+                  hintStyle: AppTexts.bodyM,
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppTexts.button),
+          ),
+          TextButton(
+            onPressed: () {
+              final date = dateController.text.trim();
+              final start = startController.text.trim();
+              final end = endController.text.trim();
+              if (!_isValidDate(date) ||
+                  !_isValidTime(start) ||
+                  !_isValidTime(end)) {
+                Navigator.pop(ctx);
+                return;
+              }
+              _rehearsalService.updateRehearsal(
+                id: rehearsal.id,
+                date: date,
+                startTime: start,
+                endTime: end,
+                location: locationController.text.trim(),
+                notes: notesController.text.trim(),
+              );
+              Navigator.pop(ctx);
+            },
+            child: Text('Save', style: AppTexts.button),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _createRehearsal() async {
     if (_formKey.currentState!.validate()) {
+      await _rehearsalService.addRehearsal(
+        date: _dateController.text.trim(),
+        startTime: _startTimeController.text.trim(),
+        endTime: _endTimeController.text.trim(),
+        location: _locationController.text.trim(),
+        notes: _notesController.text.trim(),
+        bandId: _bandId,
+        createdBy: _createdBy,
+      );
+
+      _dateController.clear();
+      _startTimeController.clear();
+      _endTimeController.clear();
+      _locationController.clear();
+      _notesController.clear();
+
+      if (!mounted) return;
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -104,7 +264,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
             style: AppTexts.headS,
           ),
           content: Text(
-            'Rehearsal request created successfully.',
+            'Rehearsal saved to Firestore.',
             style: AppTexts.bodyL,
           ),
           actions: [
@@ -192,7 +352,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: _timeController,
+                      controller: _startTimeController,
                       style: AppTexts.bodyL,
                       keyboardType: TextInputType.datetime,
                       decoration: InputDecoration(
@@ -221,7 +381,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: _timeController,
+                      controller: _endTimeController,
                       style: AppTexts.bodyL,
                       keyboardType: TextInputType.datetime,
                       decoration: InputDecoration(
@@ -298,6 +458,85 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Saved rehearsals',
+              style: AppTexts.headS,
+            ),
+            const SizedBox(height: 12),
+            StreamBuilder<QuerySnapshot>(
+              stream: _rehearsalService.getRehearsals(_bandId),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Text(
+                    'Could not load rehearsals.',
+                    style: AppTexts.bodyM.copyWith(color: AppColors.error),
+                  );
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Text(
+                    'No rehearsals yet.',
+                    style: AppTexts.bodyM,
+                  );
+                }
+
+                final items = snapshot.data!.docs
+                    .map((doc) => Rehearsal.fromFirestore(doc))
+                    .toList();
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final r = items[index];
+                    return Card(
+                      color: AppColors.surface,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          '${r.date} · ${r.startTime}–${r.endTime}',
+                          style: AppTexts.bodyL,
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(r.location, style: AppTexts.bodyM),
+                            if (r.notes.isNotEmpty)
+                              Text(
+                                r.notes,
+                                style: AppTexts.bodyM.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () => _showEditRehearsalDialog(r),
+                              icon: const Icon(Icons.edit_outlined),
+                              color: AppColors.primary,
+                            ),
+                            IconButton(
+                              onPressed: () => _deleteRehearsal(r.id),
+                              icon: const Icon(Icons.delete_outline),
+                              color: AppColors.widgetDark,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
             const SizedBox(height: 24),
             Text(
