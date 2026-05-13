@@ -167,14 +167,32 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
       body: StreamBuilder<List<Gig>>(
         stream: _gigService.getGigs(_bandId),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: AppPadding.allL,
+                child: Text(
+                  'Gig listesi yüklenemedi: ${snapshot.error}',
+                  style: AppTexts.bodyM.copyWith(color: AppColors.error),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
           // filter by search
           final allGigs = snapshot.data ?? [];
           final query = _searchController.text.trim().toLowerCase();
           final gigs = query.isEmpty
               ? allGigs
               : allGigs
-              .where((g) => g.title.toLowerCase().contains(query))
-              .toList();
+                  .where((g) => g.title.toLowerCase().contains(query))
+                  .toList();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
