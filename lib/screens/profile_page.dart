@@ -448,6 +448,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       SizedBox(height: AppPadding.M),
 
+                      Text(
+                        'Time range (24h): start — then end',
+                        style: AppTexts.bodyM,
+                      ),
+                      SizedBox(height: AppPadding.S),
+
                       Row(
                         children: [
                           Expanded(
@@ -455,7 +461,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               controller: _startHourController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
-                                hintText: 'Hour',
+                                hintText: 'Start hour',
                                 filled: true,
                                 fillColor: AppColors.surface,
                                 border: OutlineInputBorder(
@@ -470,7 +476,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               controller: _startMinuteController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
-                                hintText: 'Min',
+                                hintText: 'Start min',
                                 filled: true,
                                 fillColor: AppColors.surface,
                                 border: OutlineInputBorder(
@@ -485,7 +491,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               controller: _endHourController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
-                                hintText: 'Hour',
+                                hintText: 'End hour',
                                 filled: true,
                                 fillColor: AppColors.surface,
                                 border: OutlineInputBorder(
@@ -500,7 +506,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               controller: _endMinuteController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
-                                hintText: 'Min',
+                                hintText: 'End min',
                                 filled: true,
                                 fillColor: AppColors.surface,
                                 border: OutlineInputBorder(
