@@ -27,14 +27,24 @@ class GigService {
     });
   }
 
-  // real-time stream of gigs for a band
+  // real-time stream of gigs for a band.
+  // NOTE: We intentionally avoid Firestore orderBy('createdAt') here. Combining
+  // where + orderBy requires a composite index; without it the stream errors and
+  // StreamBuilder shows an empty list while documents still exist in Firebase.
   Stream<List<Gig>> getGigs(String bandId) {
-    return _gigs
-        .where('bandId', isEqualTo: bandId)
-        .orderBy('createdAt', descending: false)
-        .snapshots()
-        .map((snapshot) =>
-        snapshot.docs.map((doc) => Gig.fromFirestore(doc)).toList());
+    return _gigs.where('bandId', isEqualTo: bandId).snapshots().map((snapshot) {
+      final gigs =
+          snapshot.docs.map((doc) => Gig.fromFirestore(doc)).toList();
+      gigs.sort((a, b) {
+        final at = a.createdAt;
+        final bt = b.createdAt;
+        if (at == null && bt == null) return 0;
+        if (at == null) return 1;
+        if (bt == null) return -1;
+        return at.compareTo(bt);
+      });
+      return gigs;
+    });
   }
 
   // delete a gig
