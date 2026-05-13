@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
+import '../services/preferences_service.dart';
 
 class MyNavBar extends StatelessWidget {
   final int currentIndex;
@@ -9,10 +10,13 @@ class MyNavBar extends StatelessWidget {
     required this.currentIndex,
   });
 
-  void _onTap(BuildContext context, int index) {
+  void _onTap(BuildContext context, int index) async {
     if (index == currentIndex) return;
 
-    //placeholder page names!!!
+    // save selected tab to local storage
+    final prefs = PreferencesService();
+    await prefs.saveLastTab(index);
+
     switch (index) {
       case 0:
         Navigator.pushReplacementNamed(context, '/rehearsals');
