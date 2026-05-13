@@ -62,6 +62,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               Image.asset(
                 'assets/logo.png',
                 height: 100,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.music_note,
+                    size: 72,
+                    color: AppColors.primary,
+                  );
+                },
               ),
               const SizedBox(height: 12),
               Text(

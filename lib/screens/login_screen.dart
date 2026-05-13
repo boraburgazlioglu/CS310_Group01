@@ -70,6 +70,13 @@ class _LoginScreenState extends State<LoginScreen> {
               Image.asset(
                 'assets/logo.png',
                 height: 120,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.music_note,
+                    size: 80,
+                    color: AppColors.primary,
+                  );
+                },
               ),
               const SizedBox(height: 12),
               Text(

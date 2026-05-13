@@ -81,26 +81,33 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     return true;
   }
 
-  bool _isValidTime(String value) {
-    final RegExp timeRegex = RegExp(r'^\d{2}:\d{2}$');
-    if (!timeRegex.hasMatch(value)) {
-      return false;
+  /// Accepts `14:40`, `14.40`, `9,05` etc.; returns `HH:mm` or null if invalid.
+  String? _tryNormalizeTime(String value) {
+    final s = value.trim();
+    if (s.isEmpty) return null;
+
+    int? hour;
+    int? minute;
+
+    if (s.contains(':')) {
+      final parts = s.split(':');
+      if (parts.length != 2) return null;
+      hour = int.tryParse(parts[0].trim());
+      minute = int.tryParse(parts[1].trim());
+    } else {
+      final m = RegExp(r'^(\d{1,2})[.,](\d{1,2})$').firstMatch(s);
+      if (m == null) return null;
+      hour = int.tryParse(m.group(1)!);
+      minute = int.tryParse(m.group(2)!);
     }
 
-    List<String> parts = value.split(':');
-    int hour = int.parse(parts[0]);
-    int minute = int.parse(parts[1]);
+    if (hour == null || minute == null) return null;
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
 
-    if (hour < 0 || hour > 23) {
-      return false;
-    }
-
-    if (minute < 0 || minute > 59) {
-      return false;
-    }
-
-    return true;
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
+
+  bool _isValidTime(String value) => _tryNormalizeTime(value) != null;
 
   void _deleteRehearsal(String id) {
     _rehearsalService.deleteRehearsal(id);
@@ -218,11 +225,13 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                 Navigator.pop(ctx);
                 return;
               }
+              final startNorm = _tryNormalizeTime(start)!;
+              final endNorm = _tryNormalizeTime(end)!;
               _rehearsalService.updateRehearsal(
                 id: rehearsal.id,
                 date: date,
-                startTime: start,
-                endTime: end,
+                startTime: startNorm,
+                endTime: endNorm,
                 location: locationController.text.trim(),
                 notes: notesController.text.trim(),
               );
@@ -236,16 +245,32 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   }
 
   Future<void> _createRehearsal() async {
-    if (_formKey.currentState!.validate()) {
-      await _rehearsalService.addRehearsal(
-        date: _dateController.text.trim(),
-        startTime: _startTimeController.text.trim(),
-        endTime: _endTimeController.text.trim(),
-        location: _locationController.text.trim(),
-        notes: _notesController.text.trim(),
-        bandId: _bandId,
-        createdBy: _createdBy,
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Formda hata var. Saat için 24 saat formatı kullan: örn. 14:40 veya 14.40',
+            style: AppTexts.bodyM.copyWith(color: AppColors.white),
+          ),
+          backgroundColor: AppColors.error,
+        ),
       );
+      return;
+    }
+
+    final startNorm = _tryNormalizeTime(_startTimeController.text)!;
+    final endNorm = _tryNormalizeTime(_endTimeController.text)!;
+
+    await _rehearsalService.addRehearsal(
+      date: _dateController.text.trim(),
+      startTime: startNorm,
+      endTime: endNorm,
+      location: _locationController.text.trim(),
+      notes: _notesController.text.trim(),
+      bandId: _bandId,
+      createdBy: _createdBy,
+    );
 
       _dateController.clear();
       _startTimeController.clear();
@@ -279,7 +304,6 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
           ],
         ),
       );
-    }
   }
 
   Color _getStatusColor(String status) {
@@ -373,7 +397,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                           return 'Please enter a time';
                         }
                         if (!_isValidTime(value.trim())) {
-                          return 'Use 24-hour xx:xx format';
+                          return '24 saat: 14:40 veya 14.40';
                         }
                         return null;
                       },
@@ -402,7 +426,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                           return 'Please enter a time';
                         }
                         if (!_isValidTime(value.trim())) {
-                          return 'Use 24-hour xx:xx format';
+                          return '24 saat: 14:40 veya 14.40';
                         }
                         return null;
                       },
