@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import 'providers/expense_provider.dart';
 
 
 void main() async {
@@ -22,6 +23,9 @@ void main() async {
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ExpenseProvider(),
         ),
       ],
       child: const BandmateApp(),
