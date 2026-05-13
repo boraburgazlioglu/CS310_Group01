@@ -468,9 +468,16 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
               stream: _rehearsalService.getRehearsals(_bandId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return Text(
-                    'Provalar yüklenemedi: ${snapshot.error}',
-                    style: AppTexts.bodyM.copyWith(color: AppColors.error),
+                  final err = snapshot.error.toString();
+                  final hint = err.contains('permission-denied')
+                      ? '\n\nFirestore Rules: giriş yapmış kullanıcı için rehearsals okumasına izin verildiğinden emin olun (projede firestore.rules örneği var).'
+                      : '';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'Provalar yüklenemedi: $err$hint',
+                      style: AppTexts.bodyM.copyWith(color: AppColors.error),
+                    ),
                   );
                 }
                 if (snapshot.connectionState == ConnectionState.waiting &&
