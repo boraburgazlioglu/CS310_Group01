@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../widgets/bandmate_header.dart';
 import 'home_screen.dart';
-import 'song_readiness_screen.dart';
 import 'upcoming_gigs_screen.dart';
 
 class BandmateShell extends StatefulWidget {
