@@ -11,8 +11,8 @@
     For more details:
     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
 
-    Root deploy için "/" kullanılıyor. Alt klasörde (ör. GitHub Pages /repo/)
-    yayınlarken: flutter build web --base-href=/repo/ ve burayı o href ile güncelle.
+    Root deploy uses "/". For a subpath (e.g. GitHub Pages /repo/), run
+    flutter build web --base-href=/repo/ and set this href to match.
   -->
   <base href="/">
 
@@ -33,7 +33,7 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!-- Eski Flutter web service worker bazen bozuk önbellekten AssetManifest hatası verir -->
+  <!-- Unregister old Flutter web service workers (can cause stale AssetManifest errors). -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function (regs) {

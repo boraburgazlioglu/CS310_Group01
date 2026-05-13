@@ -174,7 +174,7 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
               child: Padding(
                 padding: AppPadding.allL,
                 child: Text(
-                  'Gig listesi yüklenemedi: ${snapshot.error}',
+                  'Could not load gigs: ${snapshot.error}',
                   style: AppTexts.bodyM.copyWith(color: AppColors.error),
                   textAlign: TextAlign.center,
                 ),

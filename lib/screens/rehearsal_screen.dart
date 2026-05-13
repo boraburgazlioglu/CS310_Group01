@@ -251,7 +251,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Formda hata var. Saat için 24 saat formatı kullan: örn. 14:40 veya 14.40',
+            'Fix the form. Time must be 24-hour format, e.g. 14:40 or 14.40',
             style: AppTexts.bodyM.copyWith(color: AppColors.white),
           ),
           backgroundColor: AppColors.error,
@@ -398,7 +398,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                           return 'Please enter a time';
                         }
                         if (!_isValidTime(value.trim())) {
-                          return '24 saat: 14:40 veya 14.40';
+                          return 'Use 24-hour format: 14:40 or 14.40';
                         }
                         return null;
                       },
@@ -427,7 +427,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                           return 'Please enter a time';
                         }
                         if (!_isValidTime(value.trim())) {
-                          return '24 saat: 14:40 veya 14.40';
+                          return 'Use 24-hour format: 14:40 or 14.40';
                         }
                         return null;
                       },
@@ -495,12 +495,12 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
                 if (snapshot.hasError) {
                   final err = snapshot.error.toString();
                   final hint = err.contains('permission-denied')
-                      ? '\n\nFirestore Rules: giriş yapmış kullanıcı için rehearsals okumasına izin verildiğinden emin olun (projede firestore.rules örneği var).'
+                      ? '\n\nCheck Firestore rules: signed-in users need read access to rehearsals (see firestore.rules in the repo).'
                       : '';
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
-                      'Provalar yüklenemedi: $err$hint',
+                      'Could not load rehearsals: $err$hint',
                       style: AppTexts.bodyM.copyWith(color: AppColors.error),
                     ),
                   );

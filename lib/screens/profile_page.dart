@@ -161,7 +161,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// `23.00` / `12` gibi; sadece tam sayı kısmını alır.
+  /// Parses integers from inputs like `23.00` or `12` (uses whole part before decimal).
   int? _parseWholeNumber(String raw) {
     var s = raw.trim().replaceAll(',', '.');
     if (s.isEmpty) return null;
@@ -172,7 +172,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return int.tryParse(s);
   }
 
-  /// Ay: `1`–`12`, `January` / `Jan`, `Ocak` vb.
+  /// Month: `1`–`12`, English or Turkish month names.
   int? _parseMonthInput(String raw) {
     final t = raw.trim().toLowerCase();
     if (t.isEmpty) return null;
@@ -236,24 +236,24 @@ class _ProfilePageState extends State<ProfilePage> {
     final endMinute = _parseWholeNumber(_endMinuteController.text);
 
     if (year == null) {
-      _showError('Yıl geçersiz. Örnek: 2026');
+      _showError('Invalid year. Example: 2026');
       return;
     }
     if (month == null) {
       _showError(
-          'Ay geçersiz. 1–12 sayı veya ay adı gir (örn. 5, January, Ocak).');
+          'Invalid month. Enter 1–12 or a month name (e.g. 5, January).');
       return;
     }
     if (day == null) {
-      _showError('Gün geçersiz. Örnek: 14');
+      _showError('Invalid day. Example: 14');
       return;
     }
     if (startHour == null || startMinute == null) {
-      _showError('Başlangıç saati/dakikası sayı olmalı (örn. 12 ve 0).');
+      _showError('Start hour and minute must be numbers (e.g. 12 and 0).');
       return;
     }
     if (endHour == null || endMinute == null) {
-      _showError('Bitiş saati/dakikası sayı olmalı (örn. 23 ve 0).');
+      _showError('End hour and minute must be numbers (e.g. 23 and 0).');
       return;
     }
 
@@ -267,7 +267,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final uid = context.read<AuthProvider>().user?.uid;
     if (uid == null) {
-      _showError('Slot eklemek için giriş yapmalısın.');
+      _showError('You must be signed in to add a slot.');
       return;
     }
 
@@ -369,12 +369,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     if (user?.uid != null) const SizedBox(height: 10),
                     _InfoRow(
                       label: 'Roles',
-                      value: 'Henüz tanımlı değil',
+                      value: 'Not set yet',
                     ),
                     const SizedBox(height: 10),
                     _InfoRow(
                       label: 'Groups',
-                      value: 'Henüz tanımlı değil',
+                      value: 'Not set yet',
                     ),
                   ],
                 ),
@@ -419,7 +419,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               controller: _monthController,
                               keyboardType: TextInputType.text,
                               decoration: InputDecoration(
-                                hintText: 'Ay (1-12 veya January)',
+                                hintText: 'Month (1-12 or January)',
                                 filled: true,
                                 fillColor: AppColors.surface,
                                 border: OutlineInputBorder(
@@ -546,7 +546,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         builder: (context, snapshot) {
                           if (snapshot.hasError) {
                             return Text(
-                              'Slotlar yüklenemedi: ${snapshot.error}',
+                              'Could not load slots: ${snapshot.error}',
                               style: AppTexts.bodyM.copyWith(
                                 color: AppColors.error,
                               ),

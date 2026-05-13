@@ -32,8 +32,8 @@ class ProfileService {
     });
   }
 
-  /// Giriş yoksa boş liste; varsa sadece o kullanıcının slotları.
-  /// `orderBy` kullanılmıyor (gigs/rehearsals ile aynı: bileşik indeks / stream hatası önlenir).
+  /// When signed out, yields an empty list; otherwise that user's slots.
+  /// No Firestore `orderBy` (avoids composite index issues like gigs/rehearsals).
   Stream<List<ProfileAvailabilitySlot>> watchSlotsForSignedInUser() {
     return FirebaseAuth.instance.authStateChanges().asyncExpand((user) {
       if (user == null) {
