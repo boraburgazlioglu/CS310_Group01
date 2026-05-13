@@ -38,8 +38,9 @@ class _SignupScreenState extends State<SignupScreen> {
     final authProvider = context.read<AuthProvider>();
 
     final success = await authProvider.signUp(
-      email: _emailController.text,
+      email: _emailController.text.trim(),
       password: _passwordController.text,
+      displayName: _nameController.text.trim(),
     );
 
     if (!mounted) {

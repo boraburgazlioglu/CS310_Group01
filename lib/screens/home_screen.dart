@@ -1,6 +1,8 @@
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
@@ -18,7 +20,10 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Welcome, Idris', style: AppTexts.headM),
+            Text(
+              'Welcome, ${context.watch<AuthProvider>().displayNameOrEmail}',
+              style: AppTexts.headM,
+            ),
             const SizedBox(height: 16),
 
             // upcoming rehearsal card

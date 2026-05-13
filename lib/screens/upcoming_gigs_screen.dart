@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/gig_model.dart';
+import '../providers/auth_provider.dart';
 import '../services/gig_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
@@ -22,7 +24,6 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
 
   // placeholder until auth is integrated
   final String _bandId = 'group1';
-  final String _createdBy = 'Idris';
 
   @override
   void dispose() {
@@ -70,7 +71,8 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                   time: timeController.text.trim(),
                   location: locationController.text.trim(),
                   bandId: _bandId,
-                  createdBy: _createdBy,
+                  createdBy:
+                      ctx.read<AuthProvider>().createdByForFirestore,
                 );
                 Navigator.pop(ctx);
               }

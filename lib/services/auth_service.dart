@@ -13,12 +13,19 @@ class AuthService {
   Future<UserCredential> signUp({
     required String email,
     required String password,
+    String? displayName,
   }) async {
     try {
-      return await _auth.createUserWithEmailAndPassword(
+      final cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      final name = displayName?.trim();
+      if (name != null && name.isNotEmpty) {
+        await cred.user?.updateDisplayName(name);
+        await cred.user?.reload();
+      }
+      return cred;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthError(e);
     }

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,12 +27,6 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _startMinuteController = TextEditingController();
   final TextEditingController _endHourController = TextEditingController();
   final TextEditingController _endMinuteController = TextEditingController();
-
-  // placeholder data for info rows
-  final String userName = 'idris';
-  final String email = 'idrisimamoglu@sabanci.uni';
-  final List<String> roles = ['manager', 'guitarist'];
-  final List<String> groups = ['band1', 'band2'];
 
   @override
   void dispose() {
@@ -196,7 +189,11 @@ class _ProfilePageState extends State<ProfilePage> {
     if (startMinute < 0 || startMinute > 59) {_showError('Minute has to be in range 0-60!'); return;}
     if (endMinute < 0 || endMinute > 59) {_showError('Minute has to be in range 0-60!'); return;}
 
-    final userId = context.read<AuthProvider>().user?.uid ?? 'guest';
+    final uid = context.read<AuthProvider>().user?.uid;
+    if (uid == null) {
+      _showError('Slot eklemek için giriş yapmalısın.');
+      return;
+    }
 
     _profileService.addSlot(
       year: year,
@@ -206,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
       startMinute: startMinute,
       endHour: endHour,
       endMinute: endMinute,
-      userId: userId,
+      userId: uid,
     );
 
     _yearController.clear();
@@ -220,7 +217,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final userId = context.watch<AuthProvider>().user?.uid ?? 'guest';
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+    final displayName = auth.displayNameOrEmail;
+    final email = user?.email ?? '—';
+    final photoUrl = user?.photoURL;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -257,24 +258,23 @@ class _ProfilePageState extends State<ProfilePage> {
                             border: Border.all(color: AppColors.black),
                           ),
                           clipBehavior: Clip.antiAlias,
-                          child: Image.asset(
-                            'assets/images/ahmetkaya.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                Icons.person,
-                                size: 48,
-                                color: AppColors.widgetDark,
-                              );
-                            },
-                          ),
+                          child: photoUrl != null && photoUrl.isNotEmpty
+                              ? Image.network(
+                                  photoUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return _AvatarFallback(
+                                        label: displayName);
+                                  },
+                                )
+                              : _AvatarFallback(label: displayName),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _InfoRow(label: 'Name', value: userName),
+                              _InfoRow(label: 'Name', value: displayName),
                               const SizedBox(height: 10),
                               _InfoRow(label: 'Email', value: email),
                             ],
@@ -285,9 +285,21 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 16),
                     const Divider(height: 1),
                     const SizedBox(height: 16),
-                    _InfoRow(label: 'Roles', value: roles.join(', ')),
+                    if (user?.uid != null)
+                      _InfoRow(
+                        label: 'User ID',
+                        value: user!.uid,
+                      ),
+                    if (user?.uid != null) const SizedBox(height: 10),
+                    _InfoRow(
+                      label: 'Roles',
+                      value: 'Henüz tanımlı değil',
+                    ),
                     const SizedBox(height: 10),
-                    _InfoRow(label: 'Groups', value: groups.join(', ')),
+                    _InfoRow(
+                      label: 'Groups',
+                      value: 'Henüz tanımlı değil',
+                    ),
                   ],
                 ),
               ),
@@ -452,19 +464,37 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       Text('Available Time Slots', style: AppTexts.headS),
 
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _profileService.getSlots(userId),
+                      StreamBuilder<List<ProfileAvailabilitySlot>>(
+                        stream:
+                            _profileService.watchSlotsForSignedInUser(),
                         builder: (context, snapshot) {
                           if (snapshot.hasError) {
                             return Text(
-                              'Could not load slots.',
+                              'Slotlar yüklenemedi: ${snapshot.error}',
                               style: AppTexts.bodyM.copyWith(
                                 color: AppColors.error,
                               ),
                             );
                           }
-                          if (!snapshot.hasData ||
-                              snapshot.data!.docs.isEmpty) {
+                          if (snapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              !snapshot.hasData) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          final slots = snapshot.data ?? [];
+                          if (slots.isEmpty) {
                             return Text(
                               'No time slots added yet.',
                               style: AppTexts.bodyM.copyWith(
@@ -472,11 +502,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             );
                           }
-
-                          final slots = snapshot.data!.docs
-                              .map((doc) =>
-                                  ProfileAvailabilitySlot.fromFirestore(doc))
-                              .toList();
 
                           return Column(
                             children: slots.map((slot) {
@@ -572,6 +597,26 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       bottomNavigationBar: const MyNavBar(currentIndex: 4),
+    );
+  }
+}
+
+class _AvatarFallback extends StatelessWidget {
+  final String label;
+
+  const _AvatarFallback({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = label.trim();
+    final initial = t.isEmpty ? '?' : t[0].toUpperCase();
+    return Container(
+      color: AppColors.surface,
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: AppTexts.headM.copyWith(color: AppColors.primary),
+      ),
     );
   }
 }
