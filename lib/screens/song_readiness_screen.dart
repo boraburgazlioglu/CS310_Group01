@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import '../models/song_model.dart';
+import '../services/song_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
@@ -8,218 +9,245 @@ import '../widgets/bot_nav_bar.dart';
 
 enum _Readiness { ready, inProgress, notStarted }
 
-class SongReadinessScreen extends StatelessWidget {
+class SongReadinessScreen extends StatefulWidget {
   const SongReadinessScreen({super.key});
 
-  static const String bandName = 'Avareler';
+  @override
+  State<SongReadinessScreen> createState() => _SongReadinessScreenState();
+}
 
-  static final List<String> _members = ['Alex', 'Sam', 'Jordan', 'Chris'];
+class _SongReadinessScreenState extends State<SongReadinessScreen> {
+  final SongService _songService = SongService();
+  final TextEditingController _titleController = TextEditingController();
 
-  static final List<_SongRow> _rows = [
-    _SongRow(
-      title: 'Scally Doesn\'t Know',
-      cells: [
-        _Readiness.ready,
-        _Readiness.inProgress,
-        _Readiness.notStarted,
-        _Readiness.ready,
-      ],
-    ),
-    _SongRow(
-      title: 'Smells Like Teen Spirit',
-      cells: [
-        _Readiness.inProgress,
-        _Readiness.ready,
-        _Readiness.ready,
-        _Readiness.inProgress,
-      ],
-    ),
-    _SongRow(
-      title: 'Come Together',
-      cells: [
-        _Readiness.notStarted,
-        _Readiness.notStarted,
-        _Readiness.inProgress,
-        _Readiness.ready,
-      ],
-    ),
-  ];
+  // placeholder until auth is integrated
+  final String _bandId = 'group1';
+  final String _createdBy = 'Idris';
+  final List<String> _members = ['Idris', 'Bora', 'Taha', 'Berke'];
 
-  static TextStyle get _sutunBaslikStili {
-    return AppTexts.bodyL.copyWith(fontWeight: FontWeight.w700);
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  void _showAddSongDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Add Song', style: AppTexts.headS),
+        content: TextField(
+          controller: _titleController,
+          style: AppTexts.bodyL,
+          decoration: InputDecoration(
+            hintText: 'Song title',
+            hintStyle: AppTexts.bodyM,
+            filled: true,
+            fillColor: AppColors.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppTexts.button),
+          ),
+          TextButton(
+            onPressed: () {
+              if (_titleController.text.trim().isNotEmpty) {
+                // save to firestore
+                _songService.addSong(
+                  title: _titleController.text.trim(),
+                  bandId: _bandId,
+                  createdBy: _createdBy,
+                  memberIds: _members,
+                );
+                _titleController.clear();
+                Navigator.pop(ctx);
+              }
+            },
+            child: Text('Add', style: AppTexts.button),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteSong(String songId) {
+    _songService.deleteSong(songId);
+  }
+
+  void _updateReadiness(String songId, String memberId, String status) {
+    _songService.updateReadiness(
+      songId: songId,
+      memberId: memberId,
+      status: status,
+    );
+  }
+
+  _Readiness _parseReadiness(String status) {
+    switch (status) {
+      case 'ready':
+        return _Readiness.ready;
+      case 'inProgress':
+        return _Readiness.inProgress;
+      default:
+        return _Readiness.notStarted;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        appBar: BandmateHeader(),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildSectionTitle(),
-            Expanded(child: _buildTableArea()),
-            _buildLegendArea(),
-          ],
-        ),
-        bottomNavigationBar: MyNavBar(currentIndex: 3),
-    );
-  }
+      backgroundColor: AppColors.backgroundDark,
+      appBar: BandmateHeader(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddSongDialog,
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: Text('Add Song',
+            style: AppTexts.button.copyWith(color: Colors.white)),
+      ),
+      body: StreamBuilder<List<Song>>(
+        stream: _songService.getSongs(_bandId),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Text('No songs yet. Add one!', style: AppTexts.bodyM),
+            );
+          }
 
-  Widget _buildSectionTitle() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppPadding.L,
-        AppPadding.M,
-        AppPadding.L,
-        AppPadding.S,
-      ),
-      child: Text(
-        'Song Readiness — $bandName',
-        style: AppTexts.headS,
-      ),
-    );
-  }
+          final songs = snapshot.data!;
 
-  Widget _buildTableArea() {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppPadding.M,
-        vertical: AppPadding.S,
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.35),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.08),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: AppPadding.allM,
-                child: _buildReadinessTable(),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                    AppPadding.L, AppPadding.M, AppPadding.L, AppPadding.S),
+                child: Text('Song Readiness — Group 1', style: AppTexts.headS),
               ),
-            ),
-          ),
-        ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: AppPadding.M, vertical: AppPadding.S),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.35)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: AppPadding.allM,
+                            child: DataTable(
+                              headingRowColor: WidgetStatePropertyAll(
+                                  AppColors.surface.withValues(alpha: 0.65)),
+                              border: TableBorder.all(
+                                color: AppColors.primary.withValues(alpha: 0.25),
+                                width: 1,
+                              ),
+                              columns: [
+                                DataColumn(
+                                    label: Text('Song',
+                                        style: AppTexts.bodyL.copyWith(
+                                            fontWeight: FontWeight.w700))),
+                                for (final m in _members)
+                                  DataColumn(
+                                      label: Text(m,
+                                          style: AppTexts.bodyL.copyWith(
+                                              fontWeight: FontWeight.w700))),
+                                DataColumn(label: const Text('')),
+                              ],
+                              rows: songs.map((song) {
+                                return DataRow(cells: [
+                                  DataCell(SizedBox(
+                                    width: 160,
+                                    child: Text(song.title,
+                                        style: AppTexts.bodyL),
+                                  )),
+                                  for (final m in _members)
+                                    DataCell(
+                                      GestureDetector(
+                                        onTap: () {
+                                          // cycle through readiness statuses on tap
+                                          final current =
+                                              song.memberReadiness[m] ??
+                                                  'notStarted';
+                                          final next = current == 'notStarted'
+                                              ? 'inProgress'
+                                              : current == 'inProgress'
+                                              ? 'ready'
+                                              : 'notStarted';
+                                          _updateReadiness(song.id, m, next);
+                                        },
+                                        child: _StatusIcon(
+                                          status: _parseReadiness(
+                                              song.memberReadiness[m] ??
+                                                  'notStarted'),
+                                        ),
+                                      ),
+                                    ),
+                                  DataCell(
+                                    IconButton(
+                                      onPressed: () => _deleteSong(song.id),
+                                      icon: const Icon(Icons.delete_outline),
+                                      color: AppColors.widgetDark,
+                                    ),
+                                  ),
+                                ]);
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              _buildLegendArea(),
+            ],
+          );
+        },
       ),
-    );
-  }
-
-  Widget _buildReadinessTable() {
-    final List<DataColumn> kolonlar = [];
-
-    kolonlar.add(
-      DataColumn(
-        label: Text('Song', style: _sutunBaslikStili),
-      ),
-    );
-
-    for (final String uyeAdi in _members) {
-      kolonlar.add(
-        DataColumn(
-          label: Text(uyeAdi, style: _sutunBaslikStili),
-        ),
-      );
-    }
-
-    final List<DataRow> tabloSatirlari = [];
-
-    for (final _SongRow satir in _rows) {
-      final List<DataCell> hucreler = [];
-
-      hucreler.add(
-        DataCell(
-          SizedBox(
-            width: 160,
-            child: Text(satir.title, style: AppTexts.bodyL),
-          ),
-        ),
-      );
-
-      for (final _Readiness durum in satir.cells) {
-        hucreler.add(DataCell(_StatusIcon(status: durum)));
-      }
-
-      tabloSatirlari.add(DataRow(cells: hucreler));
-    }
-
-    return DataTable(
-      headingRowColor: WidgetStatePropertyAll(
-        AppColors.surface.withValues(alpha: 0.65),
-      ),
-      dataRowColor: WidgetStatePropertyAll(AppColors.white),
-      border: TableBorder.all(
-        color: AppColors.primary.withValues(alpha: 0.25),
-        width: 1,
-      ),
-      columns: kolonlar,
-      rows: tabloSatirlari,
+      bottomNavigationBar: MyNavBar(currentIndex: 3),
     );
   }
 
   Widget _buildLegendArea() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppPadding.L,
-        AppPadding.M,
-        AppPadding.L,
-        88,
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Legend',
-              style: AppTexts.bodyL.copyWith(fontWeight: FontWeight.w700),
-            ),
-            SizedBox(height: AppPadding.M),
-            _LegendRow(
+      padding:
+      EdgeInsets.fromLTRB(AppPadding.L, AppPadding.M, AppPadding.L, 88),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Legend',
+              style: AppTexts.bodyL.copyWith(fontWeight: FontWeight.w700)),
+          SizedBox(height: AppPadding.M),
+          _LegendRow(
               icon: _StatusIcon(status: _Readiness.ready, compact: true),
-              label: 'Ready',
-            ),
-            SizedBox(height: AppPadding.S),
-            _LegendRow(
-              icon: _StatusIcon(
-                status: _Readiness.inProgress,
-                compact: true,
-              ),
-              label: 'Work in Progress',
-            ),
-            SizedBox(height: AppPadding.S),
-            _LegendRow(
-              icon: _StatusIcon(
-                status: _Readiness.notStarted,
-                compact: true,
-              ),
-              label: 'Not Started',
-            ),
-          ],
-        ),
+              label: 'Ready'),
+          SizedBox(height: AppPadding.S),
+          _LegendRow(
+              icon: _StatusIcon(status: _Readiness.inProgress, compact: true),
+              label: 'Work in Progress'),
+          SizedBox(height: AppPadding.S),
+          _LegendRow(
+              icon: _StatusIcon(status: _Readiness.notStarted, compact: true),
+              label: 'Not Started'),
+        ],
       ),
     );
   }
-}
-
-class _SongRow {
-  const _SongRow({required this.title, required this.cells});
-
-  final String title;
-  final List<_Readiness> cells;
 }
 
 class _StatusIcon extends StatelessWidget {
@@ -230,27 +258,15 @@ class _StatusIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double ikonBoyutu = compact ? 22.0 : 26.0;
-
+    final double size = compact ? 22.0 : 26.0;
     switch (status) {
       case _Readiness.ready:
-        return Icon(
-          Icons.check_circle,
-          color: AppColors.widgetDark,
-          size: ikonBoyutu,
-        );
+        return Icon(Icons.check_circle, color: AppColors.widgetDark, size: size);
       case _Readiness.inProgress:
-        return Icon(
-          Icons.warning_amber_rounded,
-          color: AppColors.primary,
-          size: ikonBoyutu,
-        );
+        return Icon(Icons.warning_amber_rounded,
+            color: AppColors.primary, size: size);
       case _Readiness.notStarted:
-        return Icon(
-          Icons.horizontal_rule,
-          color: AppColors.error,
-          size: ikonBoyutu + 4,
-        );
+        return Icon(Icons.horizontal_rule, color: AppColors.error, size: size + 4);
     }
   }
 }
