@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -27,25 +29,32 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text('Account Created!', style: AppTexts.headS),
-          content: Text('Welcome to BandMate!', style: AppTexts.bodyL),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/home');
-              },
-              child: Text('Continue', style: AppTexts.button),
-            ),
-          ],
+  Future<void> _submit() async {
+    //functional submit function, navigation is handled by auth gate
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.signUp(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Sign up failed.'),
         ),
       );
+    }
+    if (success) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 

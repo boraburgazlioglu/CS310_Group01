@@ -9,7 +9,7 @@ class AuthService {
   // Auth state stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign Up
+  // Sign Up service
   Future<UserCredential> signUp({
     required String email,
     required String password,
@@ -24,7 +24,7 @@ class AuthService {
     }
   }
 
-  // Login
+  // Login service
   Future<UserCredential> signIn({
     required String email,
     required String password,
@@ -39,7 +39,7 @@ class AuthService {
     }
   }
 
-  // Logout
+  // Logout service
   Future<void> signOut() async {
     await _auth.signOut();
   }
@@ -56,6 +56,7 @@ class AuthService {
       case 'user-not-found':
         return 'No user found with this email.';
       case 'wrong-password':
+      case 'invalid-credential':
         return 'Incorrect password.';
       case 'network-request-failed':
         return 'Network error. Please try again.';
