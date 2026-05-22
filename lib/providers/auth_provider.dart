@@ -28,7 +28,6 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isLoggedIn => _user != null;
 
-  /// Firestore `createdBy` / demo alanları için: önce ad, yoksa e-posta, yoksa uid.
   String get createdByForFirestore {
     final u = _user;
     if (u == null) return 'guest';
@@ -39,7 +38,6 @@ class AuthProvider extends ChangeNotifier {
     return u.uid;
   }
 
-  /// Profilde "Name" satırı: önce Firebase `displayName`; yoksa e-postanın @ öncesi (tam e-postayı tekrarlamamak için).
   String get profileDisplayName {
     final u = _user;
     if (u == null) return '—';
@@ -53,7 +51,7 @@ class AuthProvider extends ChangeNotifier {
     return u.uid;
   }
 
-  /// Karşılama / avatar yedek metni (tam e-posta veya isim).
+
   String get displayNameOrEmail {
     final u = _user;
     if (u == null) return 'Misafir';
