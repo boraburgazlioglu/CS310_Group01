@@ -42,19 +42,9 @@ class AuthService {
     }
   }
 
-  Future<bool> _hasPasswordProvider(String email) async {
-    try {
-      final methods = await _auth.fetchSignInMethodsForEmail(email);
-      return methods.contains(EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD) ||
-          methods.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<bool> _isEmailRegistered(String email) async {
-    if (await _isEmailIndexed(email)) return true;
-    return _hasPasswordProvider(email);
+    // firebase_auth 6.4+ removed fetchSignInMethodsForEmail; use email_index only.
+    return _isEmailIndexed(email);
   }
 
   bool _messageIndicatesUnknownEmail(FirebaseAuthException e) {
