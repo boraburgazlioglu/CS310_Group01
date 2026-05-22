@@ -56,6 +56,12 @@ class _SignupScreenState extends State<SignupScreen> {
     }
     if (success) {
       Navigator.of(context).popUntil((route) => route.isFirst);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created. Please log in.'),
+        ),
+      );
     }
   }
 
