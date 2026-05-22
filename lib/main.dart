@@ -1,3 +1,4 @@
+import 'package:cs310_2026/screens/band_select.dart';
 import 'package:cs310_2026/screens/expenses_screen.dart';
 import 'package:cs310_2026/screens/rehearsal_screen.dart';
 import 'package:cs310_2026/widgets/auth_gate.dart';
@@ -8,7 +9,8 @@ import 'firebase_options.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'providers/expense_provider.dart';
-
+import 'providers/song_provider.dart';
+import 'providers/band_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +28,12 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => ExpenseProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => SongProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => BandProvider(),
         ),
       ],
       child: const BandmateApp(),
@@ -53,6 +61,7 @@ class BandmateApp extends StatelessWidget {
         '/forgotPass': (context) => const ForgotPasswordScreen(),//dummy for now
         '/signup': (context) => const SignupScreen(),
         '/auth': (context) => const AuthGate(),
+        '/band': (context) => const BandSelectionScreen(),
       },
     );
   }
