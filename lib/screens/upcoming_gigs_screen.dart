@@ -290,33 +290,6 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
             SizedBox(height: AppPadding.M),
             Row(
               children: [
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                    ),
-                    onPressed: () {},
-                    child: Text(
-                      'View Details',
-                      style: AppTexts.button,
-                    ),
-                  ),
-                ),
-                SizedBox(width: AppPadding.S),
-                IconButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Edit gig screen will be added separately.',
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.edit_outlined),
-                  color: AppColors.primary,
-                ),
                 IconButton(
                   onPressed: () => _deleteGig(gig.id),
                   icon: const Icon(Icons.delete_outline),
