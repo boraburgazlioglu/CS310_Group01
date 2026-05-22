@@ -9,7 +9,6 @@ import '../providers/band_provider.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
-import '../widgets/bandmate_header.dart';
 
 class BandSelectionScreen extends StatefulWidget {
   const BandSelectionScreen({super.key});
@@ -214,12 +213,12 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
-      appBar: BandmateHeader(),
       body: SingleChildScrollView(
         padding: AppPadding.allL,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 16),
             Text('Choose Your Band', style: AppTexts.headM),
             const SizedBox(height: 8),
             Text(
