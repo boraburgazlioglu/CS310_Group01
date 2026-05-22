@@ -489,16 +489,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         label: 'User ID',
                         value: user!.uid,
                       ),
-                    if (user?.uid != null) const SizedBox(height: 10),
-                    _InfoRow(
-                      label: 'Roles',
-                      value: 'Not set yet',
-                    ),
-                    const SizedBox(height: 10),
-                    _InfoRow(
-                      label: 'Groups',
-                      value: 'Not set yet',
-                    ),
                   ],
                 ),
               ),
