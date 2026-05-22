@@ -8,6 +8,7 @@ import '../utils/padding.dart';
 import '../utils/text.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
+import '../providers/band_provider.dart';
 
 class UpcomingGigsScreen extends StatefulWidget {
   const UpcomingGigsScreen({super.key});
@@ -22,9 +23,6 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final GigService _gigService = GigService();
 
-  // placeholder until auth is integrated
-  final String _bandId = 'group1';
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -36,6 +34,15 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
     final dateController = TextEditingController();
     final timeController = TextEditingController();
     final locationController = TextEditingController();
+    final bandId = context.read<BandProvider>().currentBandId;
+    if (bandId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a band first.'),
+        ),
+      );
+      return;
+    }
 
     showDialog(
       context: context,
@@ -70,7 +77,7 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                   date: dateController.text.trim(),
                   time: timeController.text.trim(),
                   location: locationController.text.trim(),
-                  bandId: _bandId,
+                  bandId: bandId,
                   createdBy:
                       ctx.read<AuthProvider>().createdByForFirestore,
                 );
@@ -156,6 +163,25 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bandId = context.read<BandProvider>().currentBandId;
+
+    if (bandId == null) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        appBar: BandmateHeader(),
+        body: Center(
+          child: Padding(
+            padding: AppPadding.allL,
+            child: Text(
+              'Please select a band first.',
+              style: AppTexts.bodyL,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: BandmateHeader(),
@@ -167,7 +193,7 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
             style: AppTexts.button.copyWith(color: Colors.white)),
       ),
       body: StreamBuilder<List<Gig>>(
-        stream: _gigService.getGigs(_bandId),
+        stream: _gigService.getGigs(bandId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
