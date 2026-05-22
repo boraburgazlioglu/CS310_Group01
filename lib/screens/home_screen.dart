@@ -7,12 +7,34 @@ import '../providers/auth_provider.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
+import '../models/gig_model.dart';
+import '../models/rehearsal_model.dart';
+import '../services/gig_service.dart';
+import '../services/rehearsal_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.day.toString().padLeft(2, '0')}/'
+        '${dateTime.month.toString().padLeft(2, '0')}/'
+        '${dateTime.year}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${_formatDate(dateTime)} ${_formatTime(dateTime)}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bandProvider = context.watch<BandProvider>();
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: BandmateHeader(),
@@ -22,15 +44,14 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello ${context.watch<AuthProvider>().profileDisplayName},',
+              'Hello ${authProvider.profileDisplayName},',
               style: AppTexts.headM,
             ),
             Text(
-              'Welcome to ${context.watch<BandProvider>().currentBandName}!',
+              'Welcome to ${bandProvider.currentBandName}!',
               style: AppTexts.headM,
             ),
-            const SizedBox(height: 16),
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             //switch band card
             _SectionCard(
               child: Column(
@@ -72,122 +93,17 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // upcoming rehearsal card
-            _SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Upcoming Rehearsal', style: AppTexts.headS),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: AppColors.primary, size: 16),
-                      const SizedBox(width: 6),
-                      Text('25 March', style: AppTexts.bodyL),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, color: AppColors.primary, size: 16),
-                      const SizedBox(width: 6),
-                      Text('18:00', style: AppTexts.bodyL),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Members: 3/5 available', style: AppTexts.bodyM),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/rehearsals'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text('View Details', style: AppTexts.button),
-                    ),
-                  ),
-                ],
-              ),
+
+            _UpcomingRehearsalCard(
+              bandId: bandProvider.currentBandId,
+              formatDateTime: _formatDateTime,
             ),
+
             const SizedBox(height: 16),
 
-            // quick actions
-            _SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Quick Actions', style: AppTexts.headS),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickActionButton(
-                          label: 'Add Availability',
-                          icon: Icons.event_available,
-                          onTap: () => Navigator.pushNamed(context, '/profile'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _QuickActionButton(
-                          label: 'Add Gig',
-                          icon: Icons.music_note,
-                          onTap: () => Navigator.pushNamed(context, '/gigs'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickActionButton(
-                          label: 'Add Expense',
-                          icon: Icons.attach_money,
-                          onTap: () => Navigator.pushNamed(context, '/expenses'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // network image as band photo
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
-                            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300',
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  height: 60,
-                                  color: AppColors.background,
-                                  child: Icon(Icons.image, color: AppColors.primary),
-                                ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // recent activity
-            _SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Recent Activity', style: AppTexts.headS),
-                  const SizedBox(height: 8),
-                  _ActivityItem(text: "New Song Added: 'Scotty Doesn't Know'"),
-                  _ActivityItem(text: 'Gig Added: Offtown'),
-                  _ActivityItem(text: 'Expense Added: Bass strings, Boss Katana 60W'),
-                ],
-              ),
+            _UpcomingGigCard(
+              bandId: bandProvider.currentBandId,
+              formatDateTime: _formatDateTime,
             ),
           ],
         ),
@@ -216,61 +132,319 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _QuickActionButton extends StatelessWidget {
-  const _QuickActionButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
+class _UpcomingRehearsalCard extends StatelessWidget {
+  _UpcomingRehearsalCard({
+    required this.bandId,
+    required this.formatDateTime,
   });
 
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
+  final String? bandId;
+  final String Function(DateTime) formatDateTime;
+
+  final RehearsalService _rehearsalService = RehearsalService();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: AppPadding.allM,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(10),
+    if (bandId == null) {
+      return _SectionCard(
+        child: Text(
+          'Select a band to see upcoming rehearsals.',
+          style: AppTexts.bodyM,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: AppColors.white, size: 16),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: AppTexts.bodyS.copyWith(color: AppColors.white),
-              ),
+      );
+    }
+
+    return StreamBuilder<List<Rehearsal>>(
+      stream: _rehearsalService.getRehearsals(bandId!),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _SectionCard(
+            child: Text(
+              'Upcoming rehearsal could not be loaded.',
+              style: AppTexts.bodyM.copyWith(color: AppColors.error),
             ),
-          ],
-        ),
-      ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const _SectionCard(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final now = DateTime.now();
+
+        final upcoming = (snapshot.data ?? [])
+            .where(
+              (rehearsal) =>
+          rehearsal.startAt.isAfter(now) ||
+              rehearsal.startAt.isAtSameMomentAs(now),
+        )
+            .toList();
+
+        upcoming.sort((a, b) => a.startAt.compareTo(b.startAt));
+
+        final rehearsal = upcoming.isEmpty ? null : upcoming.first;
+
+        if (rehearsal == null) {
+          return _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Upcoming Rehearsal', style: AppTexts.headS),
+                const SizedBox(height: 8),
+                Text('No upcoming rehearsal yet.', style: AppTexts.bodyM),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/add-rehearsal'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Add Rehearsal',
+                      style: AppTexts.button.copyWith(color: AppColors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Upcoming Rehearsal', style: AppTexts.headS),
+              const SizedBox(height: 8),
+              Text(
+                rehearsal.title,
+                style: AppTexts.bodyL.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.play_arrow, color: AppColors.primary, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Start: ${formatDateTime(rehearsal.startAt)}',
+                      style: AppTexts.bodyM,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.stop, color: AppColors.primary, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'End: ${formatDateTime(rehearsal.endAt)}',
+                      style: AppTexts.bodyM,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      rehearsal.location,
+                      style: AppTexts.bodyM,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/rehearsals'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'View Details',
+                    style: AppTexts.button.copyWith(color: AppColors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
+class _UpcomingGigCard extends StatelessWidget {
+  _UpcomingGigCard({
+    required this.bandId,
+    required this.formatDateTime,
+  });
 
-class _ActivityItem extends StatelessWidget {
-  const _ActivityItem({required this.text});
-  final String text;
+  final String? bandId;
+  final String Function(DateTime) formatDateTime;
+
+  final GigService _gigService = GigService();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: AppPadding.vertS,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.circle, color: AppColors.primary, size: 8),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: AppTexts.bodyM)),
-        ],
-      ),
+    if (bandId == null) {
+      return _SectionCard(
+        child: Text(
+          'Select a band to see upcoming gigs.',
+          style: AppTexts.bodyM,
+        ),
+      );
+    }
+
+    return StreamBuilder<List<Gig>>(
+      stream: _gigService.getGigs(bandId!),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _SectionCard(
+            child: Text(
+              'Upcoming gig could not be loaded.',
+              style: AppTexts.bodyM.copyWith(color: AppColors.error),
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const _SectionCard(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final now = DateTime.now();
+
+        final upcoming = (snapshot.data ?? [])
+            .where(
+              (gig) =>
+          gig.scheduledAt.isAfter(now) ||
+              gig.scheduledAt.isAtSameMomentAs(now),
+        )
+            .toList();
+
+        upcoming.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+
+        final gig = upcoming.isEmpty ? null : upcoming.first;
+
+        if (gig == null) {
+          return _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Upcoming Gig', style: AppTexts.headS),
+                const SizedBox(height: 8),
+                Text('No upcoming gig yet.', style: AppTexts.bodyM),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pushNamed(context, '/add-gig'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Add Gig',
+                      style: AppTexts.button.copyWith(color: AppColors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Upcoming Gig', style: AppTexts.headS),
+              const SizedBox(height: 8),
+              Text(
+                gig.title,
+                style: AppTexts.bodyL.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      formatDateTime(gig.scheduledAt),
+                      style: AppTexts.bodyM,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      gig.location,
+                      style: AppTexts.bodyM,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/gigs'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'View Details',
+                    style: AppTexts.button.copyWith(color: AppColors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
