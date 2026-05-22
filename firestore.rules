@@ -70,6 +70,13 @@ service cloud.firestore {
       allow update: if isOwnUpdatedSlot();
     }
 
+    // Login lookup: email indexed at signup (signed-in write only).
+    match /email_index/{emailId} {
+      allow get: if true;
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
