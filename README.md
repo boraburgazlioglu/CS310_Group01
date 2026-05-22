@@ -15,3 +15,18 @@ The application is going to be created using Flutter/Dart for a range of mobile 
 - Taha Ünal - 34211 - Documentation & Submission Lead
 - Ümit Berke Polat - 33603 - Testing & Quality Assurance Lead
 - İdris İnanoğlu - 34403 - Integration & Repository Lead
+
+### Testing
+
+This project includes both unit and widget tests for the final submission.
+
+- `test/rehearsal_datetime_utils_test.dart` checks rehearsal date/time formatting and validates whether the rehearsal end time is after the start time.
+- `test/rehearsal_time_summary_test.dart` checks whether the rehearsal time summary widget displays empty and selected start/end times correctly.
+
+To run all tests:
+
+```bash
+flutter test
+```
+
+Current test result: 8 tests passed.
