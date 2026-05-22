@@ -9,6 +9,7 @@ import '../utils/padding.dart';
 import '../utils/text.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
+import '../providers/band_provider.dart';
 
 class RehearsalScreen extends StatefulWidget {
   const RehearsalScreen({super.key});
@@ -26,8 +27,6 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   final TextEditingController _endTimeController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-
-  final String _bandId = 'group1';
 
   final List<Map<String, String>> _members = [
     {'name': 'Umit Berke Polat', 'status': 'Available'},
@@ -263,13 +262,24 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     final startNorm = _tryNormalizeTime(_startTimeController.text)!;
     final endNorm = _tryNormalizeTime(_endTimeController.text)!;
 
+    final bandId = context.read<BandProvider>().currentBandId;
+
+    if (bandId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a band first.'),
+        ),
+      );
+      return;
+    }
+
     await _rehearsalService.addRehearsal(
       date: _dateController.text.trim(),
       startTime: startNorm,
       endTime: endNorm,
       location: _locationController.text.trim(),
       notes: _notesController.text.trim(),
-      bandId: _bandId,
+      bandId: bandId,
       createdBy: context.read<AuthProvider>().createdByForFirestore,
     );
 
@@ -316,6 +326,24 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bandId = context.read<BandProvider>().currentBandId;
+    if (bandId == null) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        appBar: BandmateHeader(),
+        body: Center(
+          child: Padding(
+            padding: AppPadding.allL,
+            child: Text(
+              'Please select a band first.',
+              style: AppTexts.bodyL,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: BandmateHeader(),
@@ -490,7 +518,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
             ),
             const SizedBox(height: 12),
             StreamBuilder<List<Rehearsal>>(
-              stream: _rehearsalService.getRehearsals(_bandId),
+              stream: _rehearsalService.getRehearsals(bandId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   final err = snapshot.error.toString();
