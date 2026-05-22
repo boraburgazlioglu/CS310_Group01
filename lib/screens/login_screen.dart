@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
     if (success) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      Navigator.pushReplacementNamed(context, '/band');
     }
   }
 
