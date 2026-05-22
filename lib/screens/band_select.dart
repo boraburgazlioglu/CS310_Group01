@@ -45,7 +45,10 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
       joinCode: band.joinCode,
     );
 
-    Navigator.pushReplacementNamed(context, _mainRoute);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      _mainRoute,
+          (route) => false,
+    );
   }
 
   Future<void> _createBand() async {
