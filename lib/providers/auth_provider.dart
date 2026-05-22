@@ -94,6 +94,9 @@ class AuthProvider extends ChangeNotifier {
         displayName: displayName,
       );
 
+      // Firebase auto-signs in on createUser; require explicit login.
+      await signOut();
+
       return true;
     } catch (e) {
       _errorMessage = e.toString();
