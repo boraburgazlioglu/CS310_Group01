@@ -30,6 +30,48 @@ class HomeScreen extends StatelessWidget {
               style: AppTexts.headM,
             ),
             const SizedBox(height: 16),
+            const SizedBox(height: 16),
+            //switch band card
+            _SectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Current Band', style: AppTexts.headS),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.watch<BandProvider>().displayBandName,
+                    style: AppTexts.bodyL,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Invite Code: ${context.watch<BandProvider>().displayBandJoinCode}',
+                    style: AppTexts.bodyM,
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/band');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: AppPadding.vertM,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: Icon(Icons.swap_horiz, color: AppColors.white),
+                      label: Text(
+                        'Switch Band',
+                        style: AppTexts.button.copyWith(color: AppColors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             // upcoming rehearsal card
             _SectionCard(
               child: Column(
@@ -68,21 +110,6 @@ class HomeScreen extends StatelessWidget {
                       child: Text('View Details', style: AppTexts.button),
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // my bands section
-            _SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('My Bands', style: AppTexts.headS),
-                  const SizedBox(height: 8),
-                  _BandItem(name: 'Kinder', onTap: () {}),
-                  _BandItem(name: 'Avareler', onTap: () {}),
-                  _BandItem(name: 'Jazzesesh', onTap: () {}),
                 ],
               ),
             ),
@@ -162,11 +189,6 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16,),
-            Text(
-              'Invite people to ${context.watch<BandProvider>().currentBandName}: ${context.watch<BandProvider>().currentBandJoinCode}',
-              style: AppTexts.bodyL,
-            ),
           ],
         ),
       ),
@@ -190,29 +212,6 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: child,
-    );
-  }
-}
-
-class _BandItem extends StatelessWidget {
-  const _BandItem({required this.name, required this.onTap});
-  final String name;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: AppPadding.vertS,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(name, style: AppTexts.bodyL),
-            Icon(Icons.chevron_right, color: AppColors.primary),
-          ],
-        ),
-      ),
     );
   }
 }
