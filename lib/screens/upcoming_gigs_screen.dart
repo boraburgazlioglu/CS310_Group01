@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/gig_model.dart';
 import '../providers/auth_provider.dart';
+import '../providers/band_provider.dart';
 import '../services/gig_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
-import '../providers/band_provider.dart';
 
 class UpcomingGigsScreen extends StatefulWidget {
   const UpcomingGigsScreen({super.key});
-
-  static const String bandName = 'Avareler';
 
   @override
   State<UpcomingGigsScreen> createState() => _UpcomingGigsScreenState();
@@ -29,12 +28,75 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
     super.dispose();
   }
 
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.day.toString().padLeft(2, '0')}/'
+        '${dateTime.month.toString().padLeft(2, '0')}/'
+        '${dateTime.year}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${_formatDate(dateTime)} ${_formatTime(dateTime)}';
+  }
+
+  Future<DateTime?> _pickDateTime({
+    required BuildContext pickerContext,
+    required DateTime initialDateTime,
+    required bool allowPastDates,
+  }) async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: pickerContext,
+      initialDate: initialDateTime.isBefore(now) && !allowPastDates
+          ? now
+          : initialDateTime,
+      firstDate: allowPastDates ? DateTime(2000) : now,
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate == null) {
+      return null;
+    }
+
+    if (!mounted) {
+      return null;
+    }
+
+    final pickedTime = await showTimePicker(
+      context: pickerContext,
+      initialTime: TimeOfDay.fromDateTime(initialDateTime),
+    );
+
+    if (pickedTime == null) {
+      return null;
+    }
+
+    if (!mounted) {
+      return null;
+    }
+
+    return DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+  }
+
   void _showAddGigDialog() {
     final titleController = TextEditingController();
-    final dateController = TextEditingController();
-    final timeController = TextEditingController();
     final locationController = TextEditingController();
+
+    DateTime? selectedDateTime;
+
     final bandId = context.read<BandProvider>().currentBandId;
+
     if (bandId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -46,98 +108,257 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Add Gig', style: AppTexts.headS),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDialogField(titleController, 'Gig title'),
-              const SizedBox(height: 10),
-              _buildDialogField(dateController, 'Date (e.g. Sat, Jun 14, 2026)'),
-              const SizedBox(height: 10),
-              _buildDialogField(timeController, 'Time (e.g. 8:00 PM)'),
-              const SizedBox(height: 10),
-              _buildDialogField(locationController, 'Location'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: AppTexts.button),
-          ),
-          TextButton(
-            onPressed: () {
-              if (titleController.text.trim().isNotEmpty) {
-                // save to firestore
-                _gigService.addGig(
-                  title: titleController.text.trim(),
-                  date: dateController.text.trim(),
-                  time: timeController.text.trim(),
-                  location: locationController.text.trim(),
-                  bandId: bandId,
-                  createdBy:
-                      ctx.read<AuthProvider>().createdByForFirestore,
-                );
-                Navigator.pop(ctx);
-              }
-            },
-            child: Text('Add', style: AppTexts.button),
-          ),
-        ],
-      ),
-    );
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              title: Text('Add Gig', style: AppTexts.headS),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDialogField(titleController, 'Gig title'),
+                    const SizedBox(height: 10),
+                    _buildDialogField(locationController, 'Location'),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final pickedDateTime = await _pickDateTime(
+                            pickerContext: ctx,
+                            initialDateTime: DateTime.now(),
+                            allowPastDates: false,
+                          );
+
+                          if (pickedDateTime == null) {
+                            return;
+                          }
+
+                          if (!mounted) {
+                            return;
+                          }
+
+                          setDialogState(() {
+                            selectedDateTime = pickedDateTime;
+                          });
+
+                          setDialogState(() {
+                            selectedDateTime = pickedDateTime;
+                          });
+                        },
+                        icon: Icon(
+                          Icons.calendar_today,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          'Select Date & Time',
+                          style: AppTexts.button.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      selectedDateTime == null
+                          ? 'No date and time selected'
+                          : _formatDateTime(selectedDateTime!),
+                      style: AppTexts.bodyM,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Cancel', style: AppTexts.button),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final title = titleController.text.trim();
+                    final location = locationController.text.trim();
+
+                    if (title.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a gig title.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (selectedDateTime == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select date and time.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      await _gigService.addGig(
+                        title: title,
+                        location: location,
+                        bandId: bandId,
+                        createdBy:
+                        context.read<AuthProvider>().createdByForFirestore,
+                        scheduledAt: selectedDateTime!,
+                      );
+
+                      if (!mounted) {
+                        return;
+                      }
+
+                      Navigator.pop(ctx);
+                    } catch (e) {
+                      if (!mounted) {
+                        return;
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Could not add gig: $e'),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text('Add', style: AppTexts.button),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((_) {
+      titleController.dispose();
+      locationController.dispose();
+    });
   }
 
   void _showEditDialog(Gig gig) {
     final titleController = TextEditingController(text: gig.title);
-    final dateController = TextEditingController(text: gig.date);
-    final timeController = TextEditingController(text: gig.time);
     final locationController = TextEditingController(text: gig.location);
+
+    DateTime selectedDateTime = gig.scheduledAt;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Edit Gig', style: AppTexts.headS),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDialogField(titleController, 'Gig title'),
-              const SizedBox(height: 10),
-              _buildDialogField(dateController, 'Date'),
-              const SizedBox(height: 10),
-              _buildDialogField(timeController, 'Time'),
-              const SizedBox(height: 10),
-              _buildDialogField(locationController, 'Location'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: AppTexts.button),
-          ),
-          TextButton(
-            onPressed: () {
-              // update in firestore
-              _gigService.updateGig(
-                id: gig.id,
-                title: titleController.text.trim(),
-                date: dateController.text.trim(),
-                time: timeController.text.trim(),
-                location: locationController.text.trim(),
-              );
-              Navigator.pop(ctx);
-            },
-            child: Text('Save', style: AppTexts.button),
-          ),
-        ],
-      ),
-    );
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              title: Text('Edit Gig', style: AppTexts.headS),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDialogField(titleController, 'Gig title'),
+                    const SizedBox(height: 10),
+                    _buildDialogField(locationController, 'Location'),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final pickedDateTime = await _pickDateTime(
+                            pickerContext: ctx,
+                            initialDateTime: selectedDateTime,
+                            allowPastDates: true,
+                          );
+
+                          if (pickedDateTime == null) {
+                            return;
+                          }
+
+                          if (!mounted) {
+                            return;
+                          }
+
+                          setDialogState(() {
+                            selectedDateTime = pickedDateTime;
+                          });
+                        },
+                        icon: Icon(
+                          Icons.calendar_today,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          'Change Date & Time',
+                          style: AppTexts.button.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _formatDateTime(selectedDateTime),
+                      style: AppTexts.bodyM,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Cancel', style: AppTexts.button),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final title = titleController.text.trim();
+                    final location = locationController.text.trim();
+
+                    if (title.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a gig title.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      await _gigService.updateGig(
+                        id: gig.id,
+                        title: title,
+                        location: location,
+                        scheduledAt: selectedDateTime,
+                      );
+
+                      if (!mounted) {
+                        return;
+                      }
+
+                      Navigator.pop(ctx);
+                    } catch (e) {
+                      if (!mounted) {
+                        return;
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Could not update gig: $e'),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text('Save', style: AppTexts.button),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((_) {
+      titleController.dispose();
+      locationController.dispose();
+    });
   }
 
   void _deleteGig(String id) {
@@ -163,7 +384,8 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bandId = context.read<BandProvider>().currentBandId;
+    final bandProvider = context.watch<BandProvider>();
+    final bandId = bandProvider.currentBandId;
 
     if (bandId == null) {
       return Scaffold(
@@ -189,8 +411,10 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
         onPressed: _showAddGigDialog,
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: Text('Add Gig',
-            style: AppTexts.button.copyWith(color: Colors.white)),
+        label: Text(
+          'Add Gig',
+          style: AppTexts.button.copyWith(color: Colors.white),
+        ),
       ),
       body: StreamBuilder<List<Gig>>(
         stream: _gigService.getGigs(bandId),
@@ -213,19 +437,19 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // filter by search
           final allGigs = snapshot.data ?? [];
           final query = _searchController.text.trim().toLowerCase();
+
           final gigs = query.isEmpty
               ? allGigs
               : allGigs
-                  .where((g) => g.title.toLowerCase().contains(query))
-                  .toList();
+              .where((g) => g.title.toLowerCase().contains(query))
+              .toList();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildSectionTitle(),
+              _buildSectionTitle(bandProvider.displayBandName),
               _buildSearchRow(),
               Expanded(child: _buildGigList(gigs)),
             ],
@@ -236,12 +460,16 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
     );
   }
 
-  Widget _buildSectionTitle() {
+  Widget _buildSectionTitle(String bandName) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          AppPadding.L, AppPadding.M, AppPadding.L, AppPadding.S),
+        AppPadding.L,
+        AppPadding.M,
+        AppPadding.L,
+        AppPadding.S,
+      ),
       child: Text(
-        'Upcoming Gigs — ${UpcomingGigsScreen.bandName}',
+        'Upcoming Gigs — $bandName',
         style: AppTexts.headS,
       ),
     );
@@ -250,7 +478,9 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
   Widget _buildSearchRow() {
     return Padding(
       padding: EdgeInsets.symmetric(
-          horizontal: AppPadding.L, vertical: AppPadding.M),
+        horizontal: AppPadding.L,
+        vertical: AppPadding.M,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -269,20 +499,26 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide(
-                      color: AppColors.primary.withValues(alpha: 0.35)),
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide(
-                      color: AppColors.primary.withValues(alpha: 0.25)),
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide:
-                  BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
                 ),
                 contentPadding: EdgeInsets.symmetric(
-                    horizontal: AppPadding.L, vertical: AppPadding.M),
+                  horizontal: AppPadding.L,
+                  vertical: AppPadding.M,
+                ),
               ),
             ),
           ),
@@ -338,8 +574,11 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                     width: 88,
                     height: 72,
                     color: AppColors.widgetLight.withValues(alpha: 0.25),
-                    child: Icon(Icons.music_note,
-                        size: 36, color: AppColors.widgetDark),
+                    child: Icon(
+                      Icons.music_note,
+                      size: 36,
+                      color: AppColors.widgetDark,
+                    ),
                   ),
                 ),
                 SizedBox(width: AppPadding.M),
@@ -347,14 +586,25 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(gig.title,
-                          style: AppTexts.bodyL
-                              .copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        gig.title,
+                        style: AppTexts.bodyL.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       SizedBox(height: AppPadding.S),
-                      Text('Date: ${gig.date}', style: AppTexts.bodyM),
-                      Text('Time: ${gig.time}', style: AppTexts.bodyM),
-                      Text('Location: ${gig.location}',
-                          style: AppTexts.bodyS),
+                      Text(
+                        'Date: ${_formatDate(gig.scheduledAt)}',
+                        style: AppTexts.bodyM,
+                      ),
+                      Text(
+                        'Time: ${_formatTime(gig.scheduledAt)}',
+                        style: AppTexts.bodyM,
+                      ),
+                      Text(
+                        'Location: ${gig.location}',
+                        style: AppTexts.bodyS,
+                      ),
                     ],
                   ),
                 ),
@@ -374,13 +624,11 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                   ),
                 ),
                 SizedBox(width: AppPadding.S),
-                // edit button
                 IconButton(
                   onPressed: () => _showEditDialog(gig),
                   icon: const Icon(Icons.edit_outlined),
                   color: AppColors.primary,
                 ),
-                // delete button
                 IconButton(
                   onPressed: () => _deleteGig(gig.id),
                   icon: const Icon(Icons.delete_outline),

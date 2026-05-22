@@ -10,16 +10,14 @@ class GigService {
   // add new gig to firestore
   Future<void> addGig({
     required String title,
-    required String date,
-    required String time,
+    required DateTime scheduledAt,
     required String location,
     required String bandId,
     required String createdBy,
   }) async {
     await _gigs.add({
       'title': title,
-      'date': date,
-      'time': time,
+      'scheduledAt': Timestamp.fromDate(scheduledAt),
       'location': location,
       'bandId': bandId,
       'createdBy': createdBy,
@@ -27,22 +25,12 @@ class GigService {
     });
   }
 
-  // real-time stream of gigs for a band.
-  // NOTE: We intentionally avoid Firestore orderBy('createdAt') here. Combining
-  // where + orderBy requires a composite index; without it the stream errors and
-  // StreamBuilder shows an empty list while documents still exist in Firebase.
   Stream<List<Gig>> getGigs(String bandId) {
     return _gigs.where('bandId', isEqualTo: bandId).snapshots().map((snapshot) {
-      final gigs =
-          snapshot.docs.map((doc) => Gig.fromFirestore(doc)).toList();
-      gigs.sort((a, b) {
-        final at = a.createdAt;
-        final bt = b.createdAt;
-        if (at == null && bt == null) return 0;
-        if (at == null) return 1;
-        if (bt == null) return -1;
-        return at.compareTo(bt);
-      });
+      final gigs = snapshot.docs.map((doc) => Gig.fromFirestore(doc)).toList();
+
+      gigs.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+
       return gigs;
     });
   }
@@ -56,15 +44,13 @@ class GigService {
   Future<void> updateGig({
     required String id,
     required String title,
-    required String date,
-    required String time,
     required String location,
+    required DateTime scheduledAt,
   }) async {
     await _gigs.doc(id).update({
       'title': title,
-      'date': date,
-      'time': time,
       'location': location,
+      'scheduledAt': Timestamp.fromDate(scheduledAt),
     });
   }
 }

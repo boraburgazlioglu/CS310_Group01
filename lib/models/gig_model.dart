@@ -3,8 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Gig {
   final String id;
   final String title;
-  final String date;
-  final String time;
+  final DateTime scheduledAt;
   final String location;
   final String bandId;
   final String createdBy;
@@ -13,8 +12,7 @@ class Gig {
   Gig({
     required this.id,
     required this.title,
-    required this.date,
-    required this.time,
+    required this.scheduledAt,
     required this.location,
     required this.bandId,
     required this.createdBy,
@@ -28,8 +26,7 @@ class Gig {
     return Gig(
       id: doc.id,
       title: data['title'] ?? '',
-      date: data['date'] ?? '',
-      time: data['time'] ?? '',
+      scheduledAt: (data['scheduledAt'] as Timestamp).toDate(),
       location: data['location'] ?? '',
       bandId: data['bandId'] ?? '',
       createdBy: data['createdBy'] ?? '',
@@ -41,8 +38,7 @@ class Gig {
   Map<String, dynamic> toMap() {
     return {
       'title': title,
-      'date': date,
-      'time': time,
+      'scheduledAt': Timestamp.fromDate(scheduledAt),
       'location': location,
       'bandId': bandId,
       'createdBy': createdBy,
