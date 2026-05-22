@@ -8,6 +8,7 @@ import '../widgets/bot_nav_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/expense_provider.dart';
+import '../providers/band_provider.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -22,18 +23,25 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   final TextEditingController _itemController = TextEditingController();
   bool _isListening = false;
 
-  // placeholder until auth is integrated
-  final String _bandId = 'group1';
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final bandId = context.read<BandProvider>().currentBandId;
+
+    if (bandId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a band first.'),
+        ),
+      );
+      return;
+    }
 
     if (!_isListening) {
       Provider.of<ExpenseProvider>(
         context,
         listen: false,
-      ).listenToExpenses(_bandId);
+      ).listenToExpenses(bandId);
 
       _isListening = true;
     }
@@ -50,6 +58,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     if (_formKey.currentState!.validate()) {
       final amount = double.parse(_amountController.text.trim());
       final item = _itemController.text.trim();
+      final bandId = context.read<BandProvider>().currentBandId;
+
+      if (bandId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a band first.'),
+          ),
+        );
+        return;
+      }
 
       Provider.of<ExpenseProvider>(
         context,
@@ -57,7 +75,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       ).addExpense(
         item: item,
         amount: amount,
-        bandId: _bandId,
+        bandId: bandId,
         createdBy:
             context.read<AuthProvider>().createdByForFirestore,
       );

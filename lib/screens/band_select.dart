@@ -1,11 +1,9 @@
-import 'dart:math';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../models/band_model.dart';
+import '../providers/auth_provider.dart';
 import '../providers/band_provider.dart';
+import '../services/band_service.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
@@ -21,9 +19,7 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
   final TextEditingController _bandNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _joinCodeController = TextEditingController();
-
-  final CollectionReference<Map<String, dynamic>> _bandsCollection =
-  FirebaseFirestore.instance.collection('bands');
+  final BandService _bandService = BandService();
 
   bool _isCreateMode = true;
   bool _isLoading = false;
@@ -38,49 +34,24 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
     super.dispose();
   }
 
-  String _generateJoinCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final random = Random();
-
-    return List.generate(
-      6,
-          (_) => chars[random.nextInt(chars.length)],
-    ).join();
-  }
-
-  Future<void> _setBandSessionAndEnterApp({
-    required String bandId,
-    required String bandName,
-    required String joinCode,
-  }) async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'currentBandId': bandId,
-        'joinedBands': FieldValue.arrayUnion([bandId]),
-      }, SetOptions(merge: true));
-    }
+  Future<void> _setBandSessionAndEnterApp(BandModel band) async {
+    await _bandService.setCurrentBandForUser(band.id);
 
     if (!mounted) return;
 
     context.read<BandProvider>().setCurrentBand(
-      bandId: bandId,
-      bandName: bandName,
-      joinCode: joinCode,
+      bandId: band.id,
+      bandName: band.name,
+      joinCode: band.joinCode,
     );
 
-    Navigator.pushReplacementNamed(context, _mainRoute);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      _mainRoute,
+          (route) => false,
+    );
   }
 
   Future<void> _createBand() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      _showMessage('You must be logged in first.');
-      return;
-    }
-
     final bandName = _bandNameController.text.trim();
     final description = _descriptionController.text.trim();
 
@@ -94,30 +65,17 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
     });
 
     try {
-      final bandDoc = _bandsCollection.doc();
-      final joinCode = _generateJoinCode();
+      final memberName = context.read<AuthProvider>().profileDisplayName;
 
-      await bandDoc.set({
-        'id': bandDoc.id,
-        'name': bandName,
-        'description': description,
-        'joinCode': joinCode,
-        'createdBy': user.uid,
-        'createdAt': FieldValue.serverTimestamp(),
-        'members': [user.uid],
-        'memberRoles': {
-          user.uid: 'admin',
-        },
-        'isDeleted': false,
-      });
-
-      await _setBandSessionAndEnterApp(
-        bandId: bandDoc.id,
-        bandName: bandName,
-        joinCode: joinCode,
+      final band = await _bandService.createBand(
+        name: bandName,
+        description: description,
+        memberName: memberName,
       );
+
+      await _setBandSessionAndEnterApp(band);
     } catch (e) {
-      _showMessage('Could not create band.');
+      _showMessage('Could not create band: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -128,13 +86,6 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
   }
 
   Future<void> _joinBand() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      _showMessage('You must be logged in first.');
-      return;
-    }
-
     final joinCode = _joinCodeController.text.trim().toUpperCase();
 
     if (joinCode.isEmpty) {
@@ -147,34 +98,16 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
     });
 
     try {
-      final query = await _bandsCollection
-          .where('joinCode', isEqualTo: joinCode)
-          .where('isDeleted', isEqualTo: false)
-          .limit(1)
-          .get();
+      final memberName = context.read<AuthProvider>().profileDisplayName;
 
-      if (query.docs.isEmpty) {
-        _showMessage('No band found with this code.');
-        return;
-      }
-
-      final bandDoc = query.docs.first;
-      final bandData = bandDoc.data();
-
-      await _bandsCollection.doc(bandDoc.id).set({
-        'members': FieldValue.arrayUnion([user.uid]),
-        'memberRoles': {
-          user.uid: 'member',
-        },
-      }, SetOptions(merge: true));
-
-      await _setBandSessionAndEnterApp(
-        bandId: bandDoc.id,
-        bandName: bandData['name'] ?? 'Band',
-        joinCode: bandData['joinCode'] ?? '',
+      final band = await _bandService.joinBand(
+        joinCode: joinCode,
+        memberName: memberName,
       );
+
+      await _setBandSessionAndEnterApp(band);
     } catch (e) {
-      _showMessage('Could not join band.');
+      _showMessage('Could not join band: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -184,16 +117,8 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
     }
   }
 
-  Future<void> _enterExistingBand(
-      QueryDocumentSnapshot<Map<String, dynamic>> bandDoc,
-      ) async {
-    final data = bandDoc.data();
-
-    await _setBandSessionAndEnterApp(
-      bandId: bandDoc.id,
-      bandName: data['name'] ?? 'Band',
-      joinCode: data['joinCode'] ?? '',
-    );
+  Future<void> _enterExistingBand(BandModel band) async {
+    await _setBandSessionAndEnterApp(band);
   }
 
   void _showMessage(String message) {
@@ -209,7 +134,7 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final userId = _bandService.currentUserId;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -227,7 +152,7 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
             ),
             const SizedBox(height: 16),
 
-            if (user != null) _buildUserBandsList(user.uid),
+            if (userId != null) _buildUserBandsList(userId),
 
             const SizedBox(height: 16),
             _buildModeSelector(),
@@ -252,10 +177,8 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
         children: [
           Text('Your Bands', style: AppTexts.headS),
           const SizedBox(height: 8),
-          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: _bandsCollection
-                .where('members', arrayContains: userId)
-                .snapshots(),
+          StreamBuilder<List<BandModel>>(
+            stream: _bandService.getUserBands(userId),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return _InfoBox(text: 'Could not load your bands.');
@@ -270,14 +193,9 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
                 );
               }
 
-              final docs = snapshot.data?.docs ?? [];
+              final bands = snapshot.data ?? [];
 
-              final activeBands = docs.where((doc) {
-                final data = doc.data();
-                return data['isDeleted'] != true;
-              }).toList();
-
-              if (activeBands.isEmpty) {
+              if (bands.isEmpty) {
                 return _InfoBox(
                   text:
                   'You are not in any band yet. Create one or join with a code.',
@@ -285,11 +203,11 @@ class _BandSelectionScreenState extends State<BandSelectionScreen> {
               }
 
               return Column(
-                children: activeBands.map((bandDoc) {
+                children: bands.map((band) {
                   return _BandCard(
-                    bandDoc: bandDoc,
+                    band: band,
                     isLoading: _isLoading,
-                    onEnter: () => _enterExistingBand(bandDoc),
+                    onEnter: () => _enterExistingBand(band),
                   );
                 }).toList(),
               );
@@ -426,29 +344,17 @@ class _SectionCard extends StatelessWidget {
 
 class _BandCard extends StatelessWidget {
   const _BandCard({
-    required this.bandDoc,
+    required this.band,
     required this.isLoading,
     required this.onEnter,
   });
 
-  final QueryDocumentSnapshot<Map<String, dynamic>> bandDoc;
+  final BandModel band;
   final bool isLoading;
   final VoidCallback onEnter;
 
   @override
   Widget build(BuildContext context) {
-    final data = bandDoc.data();
-
-    final bandName = data['name'] ?? 'Unnamed Band';
-    final description = data['description'] ?? '';
-    final joinCode = data['joinCode'] ?? '';
-    final members = data['members'];
-
-    int memberCount = 0;
-    if (members is List) {
-      memberCount = members.length;
-    }
-
     return Padding(
       padding: AppPadding.vertS,
       child: Row(
@@ -470,17 +376,17 @@ class _BandCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(bandName, style: AppTexts.bodyL),
-                if (description.toString().isNotEmpty)
+                Text(band.name, style: AppTexts.bodyL),
+                if (band.description.isNotEmpty)
                   Text(
-                    description,
+                    band.description,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTexts.bodyS,
                   ),
                 const SizedBox(height: 4),
                 Text(
-                  '$memberCount members • Code: $joinCode',
+                  '${band.memberCount} members • Code: ${band.joinCode}',
                   style: AppTexts.bodyS,
                 ),
               ],
