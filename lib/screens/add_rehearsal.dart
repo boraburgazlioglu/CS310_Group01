@@ -9,6 +9,8 @@ import '../services/rehearsal_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
+import '../utils/rehearsal_datetime_utils.dart';
+import '../widgets/rehearsal_time_summary.dart';
 
 class AddRehearsalScreen extends StatefulWidget {
   const AddRehearsalScreen({super.key});
@@ -40,29 +42,15 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
     super.dispose();
   }
 
-  String _formatDate(DateTime dateTime) {
-    return '${dateTime.day.toString().padLeft(2, '0')}/'
-        '${dateTime.month.toString().padLeft(2, '0')}/'
-        '${dateTime.year}';
-  }
-
-  String _formatTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:'
-        '${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${_formatDate(dateTime)} ${_formatTime(dateTime)}';
-  }
-
   Future<DateTime?> _pickDateTime({
     required DateTime initialDateTime,
     required bool allowPastDates,
   }) async {
     final now = DateTime.now();
 
-    final safeInitialDate =
-    initialDateTime.isBefore(now) && !allowPastDates ? now : initialDateTime;
+    final safeInitialDate = initialDateTime.isBefore(now) && !allowPastDates
+        ? now
+        : initialDateTime;
 
     final pickedDate = await showDatePicker(
       context: context,
@@ -98,9 +86,9 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
   void _showMessage(String message) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _validateTimes() {
@@ -114,7 +102,7 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
       return false;
     }
 
-    if (!_endAt!.isAfter(_startAt!)) {
+    if (!RehearsalDateTimeUtils.isValidRange(_startAt, _endAt)) {
       _showMessage('End time must be after start time.');
       return false;
     }
@@ -142,7 +130,8 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
   }
 
   Future<void> _selectEnd() async {
-    final initialEnd = _endAt ??
+    final initialEnd =
+        _endAt ??
         _startAt?.add(const Duration(hours: 2)) ??
         DateTime.now().add(const Duration(hours: 2));
 
@@ -298,15 +287,6 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
                     style: AppTexts.button.copyWith(color: AppColors.primary),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _startAt == null
-                      ? 'No start time selected'
-                      : 'Start: ${_formatDateTime(_startAt!)}',
-                  style: AppTexts.bodyM,
-                  textAlign: TextAlign.center,
-                ),
-
                 const SizedBox(height: 16),
 
                 OutlinedButton.icon(
@@ -317,20 +297,15 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
                     style: AppTexts.button.copyWith(color: AppColors.primary),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _endAt == null
-                      ? 'No end time selected'
-                      : 'End: ${_formatDateTime(_endAt!)}',
-                  style: AppTexts.bodyM,
-                  textAlign: TextAlign.center,
-                ),
+                const SizedBox(height: 12),
+                RehearsalTimeSummary(startAt: _startAt, endAt: _endAt),
 
                 const SizedBox(height: 20),
 
                 ElevatedButton.icon(
-                  onPressed:
-                  _isCheckingAvailability ? null : _checkAvailability,
+                  onPressed: _isCheckingAvailability
+                      ? null
+                      : _checkAvailability,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
@@ -339,13 +314,13 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
                   ),
                   icon: _isCheckingAvailability
                       ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.white,
-                    ),
-                  )
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.white,
+                          ),
+                        )
                       : Icon(Icons.fact_check, color: AppColors.white),
                   label: Text(
                     _isCheckingAvailability
@@ -359,9 +334,7 @@ class _AddRehearsalScreenState extends State<AddRehearsalScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Availability',
-                    style: AppTexts.bodyL.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppTexts.bodyL.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   for (final result in _availabilityResults)
@@ -436,8 +409,5 @@ class _AvailabilityResult {
   final String memberName;
   final bool isAvailable;
 
-  _AvailabilityResult({
-    required this.memberName,
-    required this.isAvailable,
-  });
+  _AvailabilityResult({required this.memberName, required this.isAvailable});
 }
