@@ -2,6 +2,7 @@ import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/band_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
@@ -21,11 +22,14 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome, ${context.watch<AuthProvider>().profileDisplayName}',
+              'Hello ${context.watch<AuthProvider>().profileDisplayName},',
+              style: AppTexts.headM,
+            ),
+            Text(
+              'Welcome to ${context.watch<BandProvider>().currentBandName}!',
               style: AppTexts.headM,
             ),
             const SizedBox(height: 16),
-
             // upcoming rehearsal card
             _SectionCard(
               child: Column(
@@ -158,9 +162,15 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 16,),
+            Text(
+              'Invite people to ${context.watch<BandProvider>().currentBandName}: ${context.watch<BandProvider>().currentBandJoinCode}',
+              style: AppTexts.bodyL,
+            ),
           ],
         ),
       ),
+
       bottomNavigationBar: MyNavBar(currentIndex: -1),
     );
   }
