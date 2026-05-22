@@ -1,3 +1,4 @@
+import 'package:cs310_2026/screens/add_gig.dart';
 import 'package:cs310_2026/screens/band_select.dart';
 import 'package:cs310_2026/screens/expenses_screen.dart';
 import 'package:cs310_2026/screens/rehearsal_screen.dart';
@@ -11,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'providers/expense_provider.dart';
 import 'providers/song_provider.dart';
 import 'providers/band_provider.dart';
+import '../screens/add_rehearsal.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,6 +64,8 @@ class BandmateApp extends StatelessWidget {
         '/signup': (context) => const SignupScreen(),
         '/auth': (context) => const AuthGate(),
         '/band': (context) => const BandSelectionScreen(),
+        '/add-rehearsal': (context) => const AddRehearsalScreen(),
+        '/add-gig': (context) => const AddGigScreen(),
       },
     );
   }

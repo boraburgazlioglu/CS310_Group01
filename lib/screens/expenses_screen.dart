@@ -313,7 +313,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       child: ListTile(
                         title: Text(expense.item, style: AppTexts.bodyL),
                         subtitle: Text(
-                          '${expense.amount.toStringAsFixed(0)} TL',
+                          '${expense.amount.toStringAsFixed(0)} TL Paid by ${expense.createdBy}',
                           style: AppTexts.bodyM,
                         ),
                         trailing: Row(

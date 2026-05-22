@@ -20,138 +20,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final ProfileService _profileService = ProfileService();
 
-  final TextEditingController _yearController = TextEditingController();
-  final TextEditingController _monthController = TextEditingController();
-  final TextEditingController _dayController = TextEditingController();
-  final TextEditingController _startHourController = TextEditingController();
-  final TextEditingController _startMinuteController = TextEditingController();
-  final TextEditingController _endHourController = TextEditingController();
-  final TextEditingController _endMinuteController = TextEditingController();
-
-  @override
-  void dispose() {
-    _yearController.dispose();
-    _monthController.dispose();
-    _dayController.dispose();
-    _startHourController.dispose();
-    _startMinuteController.dispose();
-    _endHourController.dispose();
-    _endMinuteController.dispose();
-    super.dispose();
-  }
-
-  void _deleteSlot(String id) {
-    _profileService.deleteSlot(id);
-  }
-
-  void _showEditSlotDialog(ProfileAvailabilitySlot slot) {
-    final yearController =
-        TextEditingController(text: slot.year.toString());
-    final monthController =
-        TextEditingController(text: slot.month.toString());
-    final dayController = TextEditingController(text: slot.day.toString());
-    final startHourController =
-        TextEditingController(text: slot.startHour.toString());
-    final startMinuteController =
-        TextEditingController(text: slot.startMinute.toString());
-    final endHourController =
-        TextEditingController(text: slot.endHour.toString());
-    final endMinuteController =
-        TextEditingController(text: slot.endMinute.toString());
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Edit time slot', style: AppTexts.headS),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: yearController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Year'),
-              ),
-              TextField(
-                controller: monthController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Month'),
-              ),
-              TextField(
-                controller: dayController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Day'),
-              ),
-              TextField(
-                controller: startHourController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Start hour'),
-              ),
-              TextField(
-                controller: startMinuteController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Start min'),
-              ),
-              TextField(
-                controller: endHourController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'End hour'),
-              ),
-              TextField(
-                controller: endMinuteController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'End min'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: AppTexts.button),
-          ),
-          TextButton(
-            onPressed: () {
-              final year = int.tryParse(yearController.text.trim());
-              final month = int.tryParse(monthController.text.trim());
-              final day = int.tryParse(dayController.text.trim());
-              final startHour =
-                  int.tryParse(startHourController.text.trim());
-              final startMinute =
-                  int.tryParse(startMinuteController.text.trim());
-              final endHour = int.tryParse(endHourController.text.trim());
-              final endMinute = int.tryParse(endMinuteController.text.trim());
-              if (year == null ||
-                  month == null ||
-                  day == null ||
-                  startHour == null ||
-                  startMinute == null ||
-                  endHour == null ||
-                  endMinute == null) {
-                Navigator.pop(ctx);
-                return;
-              }
-              _profileService.updateSlot(
-                id: slot.id,
-                year: year,
-                month: month,
-                day: day,
-                startHour: startHour,
-                startMinute: startMinute,
-                endHour: endHour,
-                endMinute: endMinute,
-              );
-              Navigator.pop(ctx);
-            },
-            child: Text('Save', style: AppTexts.button),
-          ),
-        ],
-      ),
-    );
-  }
-
-  //shows the incorrect inputs in a snack bar
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -161,134 +29,389 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// `23.00` / `12` gibi; sadece tam sayı kısmını alır.
-  int? _parseWholeNumber(String raw) {
-    var s = raw.trim().replaceAll(',', '.');
-    if (s.isEmpty) return null;
-    final dot = s.indexOf('.');
-    if (dot != -1) {
-      s = s.substring(0, dot);
-    }
-    return int.tryParse(s);
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.day.toString().padLeft(2, '0')}/'
+        '${dateTime.month.toString().padLeft(2, '0')}/'
+        '${dateTime.year}';
   }
 
-  /// Ay: `1`–`12`, `January` / `Jan`, `Ocak` vb.
-  int? _parseMonthInput(String raw) {
-    final t = raw.trim().toLowerCase();
-    if (t.isEmpty) return null;
-    final n = int.tryParse(t);
-    if (n != null && n >= 1 && n <= 12) return n;
-    const months = <String, int>{
-      'january': 1,
-      'jan': 1,
-      'february': 2,
-      'feb': 2,
-      'march': 3,
-      'mar': 3,
-      'april': 4,
-      'apr': 4,
-      'may': 5,
-      'june': 6,
-      'jun': 6,
-      'july': 7,
-      'jul': 7,
-      'august': 8,
-      'aug': 8,
-      'september': 9,
-      'sep': 9,
-      'sept': 9,
-      'october': 10,
-      'oct': 10,
-      'november': 11,
-      'nov': 11,
-      'december': 12,
-      'dec': 12,
-      'ocak': 1,
-      'şubat': 2,
-      'subat': 2,
-      'mart': 3,
-      'nisan': 4,
-      'mayıs': 5,
-      'mayis': 5,
-      'haziran': 6,
-      'temmuz': 7,
-      'ağustos': 8,
-      'agustos': 8,
-      'eylül': 9,
-      'eylul': 9,
-      'ekim': 10,
-      'kasım': 11,
-      'kasim': 11,
-      'aralık': 12,
-      'aralik': 12,
-    };
-    return months[t];
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  // adds the time slots to the card list, parses the texts to integers for calculations later on
-  void _addSlot() {
-    final year = _parseWholeNumber(_yearController.text);
-    final month = _parseMonthInput(_monthController.text);
-    final day = _parseWholeNumber(_dayController.text);
-    final startHour = _parseWholeNumber(_startHourController.text);
-    final startMinute = _parseWholeNumber(_startMinuteController.text);
-    final endHour = _parseWholeNumber(_endHourController.text);
-    final endMinute = _parseWholeNumber(_endMinuteController.text);
+  String _formatDateTime(DateTime dateTime) {
+    return '${_formatDate(dateTime)} ${_formatTime(dateTime)}';
+  }
 
-    if (year == null) {
-      _showError('Invalid year. Example: 2026');
-      return;
-    }
-    if (month == null) {
-      _showError(
-          'Invalid month. Enter 1-12 or a month name (e.g. 5, January).');
-      return;
-    }
-    if (day == null) {
-      _showError('Invalid day. Example: 14');
-      return;
-    }
-    if (startHour == null || startMinute == null) {
-      _showError('Start hour and minute must be numbers (e.g. 12 and 0).');
-      return;
-    }
-    if (endHour == null || endMinute == null) {
-      _showError('End hour and minute must be numbers (e.g. 23 and 0).');
-      return;
+  Future<DateTime?> _pickDateTime({
+    required BuildContext pickerContext,
+    required DateTime initialDateTime,
+    required bool allowPastDates,
+  }) async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: pickerContext,
+      initialDate: initialDateTime.isBefore(now) && !allowPastDates
+          ? now
+          : initialDateTime,
+      firstDate: allowPastDates ? DateTime(2000) : now,
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate == null) {
+      return null;
     }
 
-    //input checks
-    if (month < 1 || month > 12) {_showError('Month has to be in range 1-12!'); return;}
-    if (day < 1 || day > 31) {_showError('Day has to be in range 1-31!'); return;}
-    if (startHour < 0 || startHour > 23) {_showError('Hour has to be in range 0-23!'); return;}
-    if (endHour < 0 || endHour > 23) {_showError('Hour has to be in range 0-23!'); return;}
-    if (startMinute < 0 || startMinute > 59) {_showError('Minute has to be in range 0-60!'); return;}
-    if (endMinute < 0 || endMinute > 59) {_showError('Minute has to be in range 0-60!'); return;}
+    if (!mounted) {
+      return null;
+    }
+
+    final pickedTime = await showTimePicker(
+      context: pickerContext,
+      initialTime: TimeOfDay.fromDateTime(initialDateTime),
+    );
+
+    if (pickedTime == null) {
+      return null;
+    }
+
+    if (!mounted) {
+      return null;
+    }
+
+    return DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+  }
+
+  void _deleteSlot(String id) {
+    _profileService.deleteSlot(id);
+  }
+
+  void _showAddSlotDialog() {
+    DateTime? selectedStartAt;
+    DateTime? selectedEndAt;
 
     final uid = context.read<AuthProvider>().user?.uid;
+
     if (uid == null) {
       _showError('You must be signed in to add a slot.');
       return;
     }
 
-    _profileService.addSlot(
-      year: year,
-      month: month,
-      day: day,
-      startHour: startHour,
-      startMinute: startMinute,
-      endHour: endHour,
-      endMinute: endMinute,
-      userId: uid,
-    );
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              title: Text('Add availability slot', style: AppTexts.headS),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final pickedStart = await _pickDateTime(
+                            pickerContext: ctx,
+                            initialDateTime: DateTime.now(),
+                            allowPastDates: false,
+                          );
 
-    _yearController.clear();
-    _monthController.clear();
-    _dayController.clear();
-    _startHourController.clear();
-    _startMinuteController.clear();
-    _endHourController.clear();
-    _endMinuteController.clear();
+                          if (pickedStart == null) {
+                            return;
+                          }
+
+                          if (!mounted || !ctx.mounted) {
+                            return;
+                          }
+
+                          setDialogState(() {
+                            selectedStartAt = pickedStart;
+
+                            if (selectedEndAt == null ||
+                                !selectedEndAt!.isAfter(pickedStart)) {
+                              selectedEndAt =
+                                  pickedStart.add(const Duration(hours: 2));
+                            }
+                          });
+                        },
+                        icon: Icon(
+                          Icons.play_arrow,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          'Select Start Date & Time',
+                          style: AppTexts.button.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      selectedStartAt == null
+                          ? 'No start time selected'
+                          : 'Start: ${_formatDateTime(selectedStartAt!)}',
+                      style: AppTexts.bodyM,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final initialEnd = selectedEndAt ??
+                              selectedStartAt?.add(const Duration(hours: 2)) ??
+                              DateTime.now().add(const Duration(hours: 2));
+
+                          final pickedEnd = await _pickDateTime(
+                            pickerContext: ctx,
+                            initialDateTime: initialEnd,
+                            allowPastDates: false,
+                          );
+
+                          if (pickedEnd == null) {
+                            return;
+                          }
+
+                          if (!mounted || !ctx.mounted) {
+                            return;
+                          }
+
+                          setDialogState(() {
+                            selectedEndAt = pickedEnd;
+                          });
+                        },
+                        icon: Icon(
+                          Icons.stop,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          'Select End Date & Time',
+                          style: AppTexts.button.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      selectedEndAt == null
+                          ? 'No end time selected'
+                          : 'End: ${_formatDateTime(selectedEndAt!)}',
+                      style: AppTexts.bodyM,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Cancel', style: AppTexts.button),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (selectedStartAt == null) {
+                      _showError('Please select a start date and time.');
+                      return;
+                    }
+
+                    if (selectedEndAt == null) {
+                      _showError('Please select an end date and time.');
+                      return;
+                    }
+
+                    if (!selectedEndAt!.isAfter(selectedStartAt!)) {
+                      _showError('End time must be after start time.');
+                      return;
+                    }
+
+                    try {
+                      await _profileService.addSlot(
+                        userId: uid,
+                        startAt: selectedStartAt!,
+                        endAt: selectedEndAt!,
+                      );
+
+                      if (!mounted || !ctx.mounted) {
+                        return;
+                      }
+
+                      Navigator.pop(ctx);
+                    } catch (e) {
+                      if (!mounted) {
+                        return;
+                      }
+
+                      _showError('Could not add slot: $e');
+                    }
+                  },
+                  child: Text('Add', style: AppTexts.button),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditSlotDialog(ProfileAvailabilitySlot slot) {
+    DateTime selectedStartAt = slot.startAt;
+    DateTime selectedEndAt = slot.endAt;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              title: Text('Edit availability slot', style: AppTexts.headS),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final pickedStart = await _pickDateTime(
+                            pickerContext: ctx,
+                            initialDateTime: selectedStartAt,
+                            allowPastDates: true,
+                          );
+
+                          if (pickedStart == null) {
+                            return;
+                          }
+
+                          if (!mounted || !ctx.mounted) {
+                            return;
+                          }
+
+                          setDialogState(() {
+                            selectedStartAt = pickedStart;
+
+                            if (!selectedEndAt.isAfter(selectedStartAt)) {
+                              selectedEndAt =
+                                  selectedStartAt.add(const Duration(hours: 2));
+                            }
+                          });
+                        },
+                        icon: Icon(
+                          Icons.play_arrow,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          'Change Start Date & Time',
+                          style: AppTexts.button.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Start: ${_formatDateTime(selectedStartAt)}',
+                      style: AppTexts.bodyM,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final pickedEnd = await _pickDateTime(
+                            pickerContext: ctx,
+                            initialDateTime: selectedEndAt,
+                            allowPastDates: true,
+                          );
+
+                          if (pickedEnd == null) {
+                            return;
+                          }
+
+                          if (!mounted || !ctx.mounted) {
+                            return;
+                          }
+
+                          setDialogState(() {
+                            selectedEndAt = pickedEnd;
+                          });
+                        },
+                        icon: Icon(
+                          Icons.stop,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          'Change End Date & Time',
+                          style: AppTexts.button.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'End: ${_formatDateTime(selectedEndAt)}',
+                      style: AppTexts.bodyM,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Cancel', style: AppTexts.button),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (!selectedEndAt.isAfter(selectedStartAt)) {
+                      _showError('End time must be after start time.');
+                      return;
+                    }
+
+                    try {
+                      await _profileService.updateSlot(
+                        id: slot.id,
+                        startAt: selectedStartAt,
+                        endAt: selectedEndAt,
+                      );
+
+                      if (!mounted || !ctx.mounted) {
+                        return;
+                      }
+
+                      Navigator.pop(ctx);
+                    } catch (e) {
+                      if (!mounted) {
+                        return;
+                      }
+
+                      _showError('Could not update slot: $e');
+                    }
+                  },
+                  child: Text('Save', style: AppTexts.button),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -308,7 +431,8 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Profile',
+              Text(
+                'Profile',
                 style: AppTexts.headL,
               ),
               SizedBox(height: AppPadding.L),
@@ -336,13 +460,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           clipBehavior: Clip.antiAlias,
                           child: photoUrl != null && photoUrl.isNotEmpty
                               ? Image.network(
-                                  photoUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return _AvatarFallback(
-                                        label: profileName);
-                                  },
-                                )
+                            photoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _AvatarFallback(label: profileName);
+                            },
+                          )
                               : _AvatarFallback(label: profileName),
                         ),
                         const SizedBox(width: 16),
@@ -395,135 +518,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         'Arrange Schedule',
                         style: AppTexts.headM,
                       ),
-                      SizedBox(height: AppPadding.M),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _yearController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'Year',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: AppPadding.S),
-                          Expanded(
-                            child: TextField(
-                              controller: _monthController,
-                              keyboardType: TextInputType.text,
-                              decoration: InputDecoration(
-                                hintText: 'Month (1-12 or January)',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: AppPadding.S),
-                          Expanded(
-                            child: TextField(
-                              controller: _dayController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'Day',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: AppPadding.M),
-
-                      Text(
-                        'Time range (24h): start — then end',
-                        style: AppTexts.bodyM,
-                      ),
                       SizedBox(height: AppPadding.S),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _startHourController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'Start hour',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: AppPadding.S),
-                          Expanded(
-                            child: TextField(
-                              controller: _startMinuteController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'Start min',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: AppPadding.S),
-                          Expanded(
-                            child: TextField(
-                              controller: _endHourController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'End hour',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: AppPadding.S),
-                          Expanded(
-                            child: TextField(
-                              controller: _endMinuteController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: 'End min',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Add your available time slots. These slots are shared across all bands you are in.',
+                        style: AppTexts.bodyM.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-
                       SizedBox(height: AppPadding.M),
-
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: OutlinedButton(
-                          onPressed: _addSlot,
+                        child: OutlinedButton.icon(
+                          onPressed: _showAddSlotDialog,
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.symmetric(
                               horizontal: AppPadding.L,
@@ -535,20 +541,21 @@ class _ProfilePageState extends State<ProfilePage> {
                             side: const BorderSide(color: AppColors.black),
                             backgroundColor: AppColors.surface,
                           ),
-                          child: const Text(
+                          icon: Icon(
+                            Icons.add,
+                            color: AppColors.primary,
+                          ),
+                          label: const Text(
                             'Add Slot',
                             style: AppTexts.button,
                           ),
                         ),
                       ),
-
                       SizedBox(height: AppPadding.M),
-
                       Text('Available Time Slots', style: AppTexts.headS),
-
+                      SizedBox(height: AppPadding.S),
                       StreamBuilder<List<ProfileAvailabilitySlot>>(
-                        stream:
-                            _profileService.watchSlotsForSignedInUser(),
+                        stream: _profileService.watchSlotsForSignedInUser(),
                         builder: (context, snapshot) {
                           if (snapshot.hasError) {
                             return Text(
@@ -558,8 +565,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             );
                           }
+
                           if (snapshot.connectionState ==
-                                  ConnectionState.waiting &&
+                              ConnectionState.waiting &&
                               !snapshot.hasData) {
                             return const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
@@ -576,6 +584,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           }
 
                           final slots = snapshot.data ?? [];
+
                           if (slots.isEmpty) {
                             return Text(
                               'No time slots added yet.',
@@ -588,27 +597,29 @@ class _ProfilePageState extends State<ProfilePage> {
                           return Column(
                             children: slots.map((slot) {
                               return Padding(
-                                padding:
-                                    EdgeInsets.only(bottom: AppPadding.S),
+                                padding: EdgeInsets.only(bottom: AppPadding.S),
                                 child: Card(
                                   color: AppColors.surface,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     side: const BorderSide(
-                                        color: AppColors.gray),
+                                      color: AppColors.gray,
+                                    ),
                                   ),
                                   child: ListTile(
-                                    leading:
-                                        const Icon(Icons.schedule_outlined),
+                                    leading: Icon(
+                                      Icons.schedule_outlined,
+                                      color: AppColors.primary,
+                                    ),
                                     title: Text(
-                                      '${slot.day.toString().padLeft(2, '0')}/${slot.month.toString().padLeft(2, '0')}/${slot.year}',
+                                      '${_formatDate(slot.startAt)}',
                                       style: AppTexts.bodyM.copyWith(
                                         color: AppColors.textPrimary,
                                       ),
                                     ),
                                     subtitle: Text(
-                                      '${slot.startHour.toString().padLeft(2, '0')}:${slot.startMinute.toString().padLeft(2, '0')} - ${slot.endHour.toString().padLeft(2, '0')}:${slot.endMinute.toString().padLeft(2, '0')}',
+                                      '${_formatTime(slot.startAt)} - ${_formatTime(slot.endAt)}',
                                       style: AppTexts.bodyM.copyWith(
                                         color: AppColors.textSecondary,
                                       ),
@@ -625,8 +636,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                         IconButton(
                                           onPressed: () =>
                                               _deleteSlot(slot.id),
-                                          icon:
-                                              const Icon(Icons.delete_outline),
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -692,6 +704,7 @@ class _AvatarFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = label.trim();
     final initial = t.isEmpty ? '?' : t[0].toUpperCase();
+
     return Container(
       color: AppColors.surface,
       alignment: Alignment.center,
@@ -722,16 +735,16 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             '$label:',
             style: AppTexts.bodyM.copyWith(
-              color: AppColors.textPrimary
-            )
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
         Expanded(
           child: Text(
             value,
             style: AppTexts.bodyM.copyWith(
-              color: AppColors.textSecondary
-            )
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
       ],

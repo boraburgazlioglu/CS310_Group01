@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/gig_model.dart';
-import '../providers/auth_provider.dart';
+import '../providers/band_provider.dart';
 import '../services/gig_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
 import '../utils/text.dart';
 import '../widgets/bandmate_header.dart';
 import '../widgets/bot_nav_bar.dart';
-import '../providers/band_provider.dart';
 
 class UpcomingGigsScreen extends StatefulWidget {
   const UpcomingGigsScreen({super.key});
-
-  static const String bandName = 'Avareler';
 
   @override
   State<UpcomingGigsScreen> createState() => _UpcomingGigsScreenState();
@@ -29,141 +27,29 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
     super.dispose();
   }
 
-  void _showAddGigDialog() {
-    final titleController = TextEditingController();
-    final dateController = TextEditingController();
-    final timeController = TextEditingController();
-    final locationController = TextEditingController();
-    final bandId = context.read<BandProvider>().currentBandId;
-    if (bandId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a band first.'),
-        ),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Add Gig', style: AppTexts.headS),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDialogField(titleController, 'Gig title'),
-              const SizedBox(height: 10),
-              _buildDialogField(dateController, 'Date (e.g. Sat, Jun 14, 2026)'),
-              const SizedBox(height: 10),
-              _buildDialogField(timeController, 'Time (e.g. 8:00 PM)'),
-              const SizedBox(height: 10),
-              _buildDialogField(locationController, 'Location'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: AppTexts.button),
-          ),
-          TextButton(
-            onPressed: () {
-              if (titleController.text.trim().isNotEmpty) {
-                // save to firestore
-                _gigService.addGig(
-                  title: titleController.text.trim(),
-                  date: dateController.text.trim(),
-                  time: timeController.text.trim(),
-                  location: locationController.text.trim(),
-                  bandId: bandId,
-                  createdBy:
-                      ctx.read<AuthProvider>().createdByForFirestore,
-                );
-                Navigator.pop(ctx);
-              }
-            },
-            child: Text('Add', style: AppTexts.button),
-          ),
-        ],
-      ),
-    );
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.day.toString().padLeft(2, '0')}/'
+        '${dateTime.month.toString().padLeft(2, '0')}/'
+        '${dateTime.year}';
   }
 
-  void _showEditDialog(Gig gig) {
-    final titleController = TextEditingController(text: gig.title);
-    final dateController = TextEditingController(text: gig.date);
-    final timeController = TextEditingController(text: gig.time);
-    final locationController = TextEditingController(text: gig.location);
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Edit Gig', style: AppTexts.headS),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDialogField(titleController, 'Gig title'),
-              const SizedBox(height: 10),
-              _buildDialogField(dateController, 'Date'),
-              const SizedBox(height: 10),
-              _buildDialogField(timeController, 'Time'),
-              const SizedBox(height: 10),
-              _buildDialogField(locationController, 'Location'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: AppTexts.button),
-          ),
-          TextButton(
-            onPressed: () {
-              // update in firestore
-              _gigService.updateGig(
-                id: gig.id,
-                title: titleController.text.trim(),
-                date: dateController.text.trim(),
-                time: timeController.text.trim(),
-                location: locationController.text.trim(),
-              );
-              Navigator.pop(ctx);
-            },
-            child: Text('Save', style: AppTexts.button),
-          ),
-        ],
-      ),
-    );
+  String _formatDateTime(DateTime dateTime) {
+    return '${_formatDate(dateTime)} ${_formatTime(dateTime)}';
   }
 
   void _deleteGig(String id) {
     _gigService.deleteGig(id);
   }
 
-  Widget _buildDialogField(TextEditingController controller, String hint) {
-    return TextField(
-      controller: controller,
-      style: AppTexts.bodyL,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: AppTexts.bodyM,
-        filled: true,
-        fillColor: AppColors.background,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final bandId = context.read<BandProvider>().currentBandId;
+    final bandProvider = context.watch<BandProvider>();
+    final bandId = bandProvider.currentBandId;
 
     if (bandId == null) {
       return Scaffold(
@@ -179,6 +65,7 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
             ),
           ),
         ),
+        bottomNavigationBar: MyNavBar(currentIndex: 1),
       );
     }
 
@@ -186,11 +73,15 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
       backgroundColor: AppColors.backgroundDark,
       appBar: BandmateHeader(),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddGigDialog,
+        onPressed: () {
+          Navigator.pushNamed(context, '/add-gig');
+        },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: Text('Add Gig',
-            style: AppTexts.button.copyWith(color: Colors.white)),
+        label: Text(
+          'Add Gig',
+          style: AppTexts.button.copyWith(color: Colors.white),
+        ),
       ),
       body: StreamBuilder<List<Gig>>(
         stream: _gigService.getGigs(bandId),
@@ -200,7 +91,7 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
               child: Padding(
                 padding: AppPadding.allL,
                 child: Text(
-                  'Gig listesi yüklenemedi: ${snapshot.error}',
+                  'Gigs could not be loaded: ${snapshot.error}',
                   style: AppTexts.bodyM.copyWith(color: AppColors.error),
                   textAlign: TextAlign.center,
                 ),
@@ -213,21 +104,34 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // filter by search
           final allGigs = snapshot.data ?? [];
           final query = _searchController.text.trim().toLowerCase();
+
           final gigs = query.isEmpty
               ? allGigs
               : allGigs
-                  .where((g) => g.title.toLowerCase().contains(query))
-                  .toList();
+              .where((gig) => gig.title.toLowerCase().contains(query))
+              .toList();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildSectionTitle(),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppPadding.L,
+                  AppPadding.M,
+                  AppPadding.L,
+                  AppPadding.S,
+                ),
+                child: Text(
+                  'Upcoming Gigs — ${bandProvider.displayBandName}',
+                  style: AppTexts.headS,
+                ),
+              ),
               _buildSearchRow(),
-              Expanded(child: _buildGigList(gigs)),
+              Expanded(
+                child: _buildGigList(gigs),
+              ),
             ],
           );
         },
@@ -236,21 +140,12 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
     );
   }
 
-  Widget _buildSectionTitle() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          AppPadding.L, AppPadding.M, AppPadding.L, AppPadding.S),
-      child: Text(
-        'Upcoming Gigs — ${UpcomingGigsScreen.bandName}',
-        style: AppTexts.headS,
-      ),
-    );
-  }
-
   Widget _buildSearchRow() {
     return Padding(
       padding: EdgeInsets.symmetric(
-          horizontal: AppPadding.L, vertical: AppPadding.M),
+        horizontal: AppPadding.L,
+        vertical: AppPadding.M,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -269,20 +164,26 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide(
-                      color: AppColors.primary.withValues(alpha: 0.35)),
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide(
-                      color: AppColors.primary.withValues(alpha: 0.25)),
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide:
-                  BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
                 ),
                 contentPadding: EdgeInsets.symmetric(
-                    horizontal: AppPadding.L, vertical: AppPadding.M),
+                  horizontal: AppPadding.L,
+                  vertical: AppPadding.M,
+                ),
               ),
             ),
           ),
@@ -304,15 +205,25 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
   Widget _buildGigList(List<Gig> gigs) {
     if (gigs.isEmpty) {
       return Center(
-        child: Text('No gigs yet. Add one!', style: AppTexts.bodyM),
+        child: Text(
+          'No gigs yet. Add one!',
+          style: AppTexts.bodyM,
+        ),
       );
     }
 
     return ListView.separated(
-      padding: EdgeInsets.fromLTRB(AppPadding.L, 0, AppPadding.L, 88),
+      padding: EdgeInsets.fromLTRB(
+        AppPadding.L,
+        0,
+        AppPadding.L,
+        88,
+      ),
       itemCount: gigs.length,
       separatorBuilder: (_, __) => SizedBox(height: AppPadding.M),
-      itemBuilder: (_, index) => _buildGigCard(gigs[index]),
+      itemBuilder: (context, index) {
+        return _buildGigCard(gigs[index]);
+      },
     );
   }
 
@@ -322,7 +233,9 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+        side: BorderSide(
+          color: AppColors.primary.withValues(alpha: 0.4),
+        ),
       ),
       child: Padding(
         padding: AppPadding.allM,
@@ -338,8 +251,11 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                     width: 88,
                     height: 72,
                     color: AppColors.widgetLight.withValues(alpha: 0.25),
-                    child: Icon(Icons.music_note,
-                        size: 36, color: AppColors.widgetDark),
+                    child: Icon(
+                      Icons.music_note,
+                      size: 36,
+                      color: AppColors.widgetDark,
+                    ),
                   ),
                 ),
                 SizedBox(width: AppPadding.M),
@@ -347,14 +263,25 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(gig.title,
-                          style: AppTexts.bodyL
-                              .copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        gig.title,
+                        style: AppTexts.bodyL.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       SizedBox(height: AppPadding.S),
-                      Text('Date: ${gig.date}', style: AppTexts.bodyM),
-                      Text('Time: ${gig.time}', style: AppTexts.bodyM),
-                      Text('Location: ${gig.location}',
-                          style: AppTexts.bodyS),
+                      Text(
+                        'Date: ${_formatDate(gig.scheduledAt)}',
+                        style: AppTexts.bodyM,
+                      ),
+                      Text(
+                        'Time: ${_formatTime(gig.scheduledAt)}',
+                        style: AppTexts.bodyM,
+                      ),
+                      Text(
+                        'Location: ${gig.location}',
+                        style: AppTexts.bodyS,
+                      ),
                     ],
                   ),
                 ),
@@ -370,17 +297,26 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
                       foregroundColor: AppColors.white,
                     ),
                     onPressed: () {},
-                    child: Text('View Details', style: AppTexts.button),
+                    child: Text(
+                      'View Details',
+                      style: AppTexts.button,
+                    ),
                   ),
                 ),
                 SizedBox(width: AppPadding.S),
-                // edit button
                 IconButton(
-                  onPressed: () => _showEditDialog(gig),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Edit gig screen will be added separately.',
+                        ),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.edit_outlined),
                   color: AppColors.primary,
                 ),
-                // delete button
                 IconButton(
                   onPressed: () => _deleteGig(gig.id),
                   icon: const Icon(Icons.delete_outline),
