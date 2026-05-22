@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 import '../utils/colors.dart';
 import '../utils/text.dart';
 import '../utils/padding.dart';
@@ -13,23 +14,34 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    // free up memory when screen is closed
     _emailController.dispose();
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      showDialog(
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.sendPasswordResetEmail(_emailController.text);
+
+      if (!mounted) return;
+
+      await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.surface,
           title: Text('Email Sent!', style: AppTexts.headS),
           content: Text(
-            'Password reset link has been sent to your email.',
+            'If an account exists for this email, a password reset link has been sent.',
             style: AppTexts.bodyL,
           ),
           actions: [
@@ -43,6 +55,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ],
         ),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -57,8 +78,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-
-              // app logo
               Image.asset(
                 'assets/logo.png',
                 height: 100,
@@ -82,9 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 style: AppTexts.bodyM,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
-
-              // form
+              const SizedBox(height: 30),
               Container(
                 padding: AppPadding.allL,
                 decoration: BoxDecoration(
@@ -99,7 +116,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         controller: _emailController,
                         style: AppTexts.bodyL,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.email, color: AppColors.primary),
+                          prefixIcon:
+                              Icon(Icons.email, color: AppColors.primary),
                           hintText: 'Email',
                           hintStyle: AppTexts.bodyM,
                           filled: true,
@@ -120,12 +138,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // send reset link button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _submit,
+                          onPressed: _isLoading ? null : _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             padding: AppPadding.vertM,
@@ -133,7 +149,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: Text('Send Reset Link', style: AppTexts.button),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text('Send Reset Link', style: AppTexts.button),
                         ),
                       ),
                     ],
@@ -141,12 +166,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // back to login
               GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
+                onTap: () => Navigator.pop(context),
                 child: Text(
                   'Back to Login',
                   style: AppTexts.bodyS.copyWith(
