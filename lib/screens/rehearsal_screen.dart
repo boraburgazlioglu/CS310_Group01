@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/rehearsal_model.dart';
 import '../providers/auth_provider.dart';
+import '../services/band_service.dart';
 import '../services/rehearsal_service.dart';
 import '../utils/colors.dart';
 import '../utils/padding.dart';
@@ -28,12 +29,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
-  final List<Map<String, String>> _members = [
-    {'name': 'Umit Berke Polat', 'status': 'Available'},
-    {'name': 'Bora Burgazlioglu', 'status': 'Busy'},
-    {'name': 'Idris Inanoglu', 'status': 'Available'},
-    {'name': 'Taha Unal', 'status': 'Available'},
-  ];
+  final BandService _bandService = BandService();
 
   @override
   void dispose() {
@@ -315,13 +311,6 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         ],
       ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    if (status == 'Available') {
-      return AppColors.secondary;
-    }
-    return AppColors.error;
   }
 
   @override
@@ -610,39 +599,62 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
               style: AppTexts.headS,
             ),
             const SizedBox(height: 12),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _members.length,
-              itemBuilder: (context, index) {
-                final member = _members[index];
+            StreamBuilder<List<BandMember>>(
+              stream: _bandService.getBandMembers(bandId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                return Card(
-                  color: AppColors.surface,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.widgetLight,
-                      child: Text(
-                        member['name']![0],
-                        style: AppTexts.bodyM,
+                final members = snapshot.data ?? [];
+                if (members.isEmpty) {
+                  return Text(
+                    'No band members yet.',
+                    style: AppTexts.bodyM.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: members.length,
+                  itemBuilder: (context, index) {
+                    final member = members[index];
+                    final initial = member.name.isNotEmpty
+                        ? member.name[0].toUpperCase()
+                        : '?';
+
+                    return Card(
+                      color: AppColors.surface,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                    ),
-                    title: Text(
-                      member['name']!,
-                      style: AppTexts.bodyL,
-                    ),
-                    subtitle: Text(
-                      member['status']!,
-                      style: AppTexts.bodyM.copyWith(
-                        color: _getStatusColor(member['status']!),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.widgetLight,
+                          child: Text(
+                            initial,
+                            style: AppTexts.bodyM,
+                          ),
+                        ),
+                        title: Text(
+                          member.name,
+                          style: AppTexts.bodyL,
+                        ),
+                        subtitle: Text(
+                          'Set availability in Profile',
+                          style: AppTexts.bodyM.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/profile'),
                       ),
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
+                    );
+                  },
                 );
               },
             ),

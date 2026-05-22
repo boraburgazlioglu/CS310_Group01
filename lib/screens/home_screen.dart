@@ -1,12 +1,22 @@
-import '../widgets/bandmate_header.dart';
-import '../widgets/bot_nav_bar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/band_provider.dart';
+
+import '../models/expense_model.dart';
+import '../models/gig_model.dart';
+import '../models/rehearsal_model.dart';
+import '../models/song_model.dart';
 import '../providers/auth_provider.dart';
+import '../providers/band_provider.dart';
+import '../services/expense_service.dart';
+import '../services/gig_service.dart';
+import '../services/rehearsal_service.dart';
+import '../services/song_service.dart';
 import '../utils/colors.dart';
-import '../utils/text.dart';
 import '../utils/padding.dart';
+import '../utils/text.dart';
+import '../widgets/bandmate_header.dart';
+import '../widgets/bot_nav_bar.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,8 +40,6 @@ class HomeScreen extends StatelessWidget {
               style: AppTexts.headM,
             ),
             const SizedBox(height: 16),
-            const SizedBox(height: 16),
-            //switch band card
             _SectionCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,50 +80,10 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // upcoming rehearsal card
-            _SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Upcoming Rehearsal', style: AppTexts.headS),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: AppColors.primary, size: 16),
-                      const SizedBox(width: 6),
-                      Text('25 March', style: AppTexts.bodyL),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, color: AppColors.primary, size: 16),
-                      const SizedBox(width: 6),
-                      Text('18:00', style: AppTexts.bodyL),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Members: 3/5 available', style: AppTexts.bodyM),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/rehearsals'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text('View Details', style: AppTexts.button),
-                    ),
-                  ),
-                ],
-              ),
+            _UpcomingRehearsalSection(
+              bandId: context.watch<BandProvider>().currentBandId,
             ),
             const SizedBox(height: 16),
-
-            // quick actions
             _SectionCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,21 +120,11 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // network image as band photo
                       Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
-                            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300',
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  height: 60,
-                                  color: AppColors.background,
-                                  child: Icon(Icons.image, color: AppColors.primary),
-                                ),
-                          ),
+                        child: _QuickActionButton(
+                          label: 'Songs',
+                          icon: Icons.library_music,
+                          onTap: () => Navigator.pushNamed(context, '/songs'),
                         ),
                       ),
                     ],
@@ -175,25 +133,238 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // recent activity
-            _SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Recent Activity', style: AppTexts.headS),
-                  const SizedBox(height: 8),
-                  _ActivityItem(text: "New Song Added: 'Scotty Doesn't Know'"),
-                  _ActivityItem(text: 'Gig Added: Offtown'),
-                  _ActivityItem(text: 'Expense Added: Bass strings, Boss Katana 60W'),
-                ],
-              ),
+            _RecentActivitySection(
+              bandId: context.watch<BandProvider>().currentBandId,
             ),
           ],
         ),
       ),
-
       bottomNavigationBar: MyNavBar(currentIndex: -1),
+    );
+  }
+}
+
+class _UpcomingRehearsalSection extends StatelessWidget {
+  const _UpcomingRehearsalSection({required this.bandId});
+
+  final String? bandId;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Upcoming Rehearsal', style: AppTexts.headS),
+          const SizedBox(height: 8),
+          if (bandId == null)
+            Text(
+              'Select a band to see rehearsals.',
+              style: AppTexts.bodyM.copyWith(color: AppColors.textSecondary),
+            )
+          else
+            StreamBuilder<List<Rehearsal>>(
+              stream: RehearsalService().getRehearsals(bandId!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                final rehearsals = snapshot.data ?? [];
+                if (rehearsals.isEmpty) {
+                  return Text(
+                    'No rehearsals scheduled yet.',
+                    style: AppTexts.bodyM.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  );
+                }
+
+                final next = rehearsals.first;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          color: AppColors.primary,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(next.date, style: AppTexts.bodyL),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          color: AppColors.primary,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${next.startTime} – ${next.endTime}',
+                          style: AppTexts.bodyL,
+                        ),
+                      ],
+                    ),
+                    if (next.location.trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        next.location,
+                        style: AppTexts.bodyM,
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/rehearsals'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text('View Details', style: AppTexts.button),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityEntry {
+  _ActivityEntry({required this.label, required this.createdAt});
+
+  final String label;
+  final DateTime? createdAt;
+}
+
+class _RecentActivitySection extends StatelessWidget {
+  const _RecentActivitySection({required this.bandId});
+
+  final String? bandId;
+
+  List<_ActivityEntry> _mergeActivities({
+    required List<Gig> gigs,
+    required List<Song> songs,
+    required List<Expense> expenses,
+  }) {
+    final entries = <_ActivityEntry>[
+      ...gigs.map(
+        (g) => _ActivityEntry(
+          label: 'Gig added: ${g.title}',
+          createdAt: g.createdAt,
+        ),
+      ),
+      ...songs.map(
+        (s) => _ActivityEntry(
+          label: 'Song added: ${s.title}',
+          createdAt: s.createdAt,
+        ),
+      ),
+      ...expenses.map(
+        (e) => _ActivityEntry(
+          label: 'Expense added: ${e.item}',
+          createdAt: e.createdAt,
+        ),
+      ),
+    ];
+
+    entries.sort((a, b) {
+      final at = a.createdAt;
+      final bt = b.createdAt;
+      if (at == null && bt == null) return 0;
+      if (at == null) return 1;
+      if (bt == null) return -1;
+      return bt.compareTo(at);
+    });
+
+    return entries.take(5).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Recent Activity', style: AppTexts.headS),
+          const SizedBox(height: 8),
+          if (bandId == null)
+            Text(
+              'Select a band to see activity.',
+              style: AppTexts.bodyM.copyWith(color: AppColors.textSecondary),
+            )
+          else
+            StreamBuilder<List<Gig>>(
+              stream: GigService().getGigs(bandId!),
+              builder: (context, gigSnapshot) {
+                return StreamBuilder<List<Song>>(
+                  stream: SongService().getSongs(bandId!),
+                  builder: (context, songSnapshot) {
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: ExpenseService().getExpenses(bandId!),
+                      builder: (context, expenseSnapshot) {
+                        if (gigSnapshot.connectionState ==
+                                ConnectionState.waiting ||
+                            songSnapshot.connectionState ==
+                                ConnectionState.waiting ||
+                            expenseSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+
+                        final expenses = (expenseSnapshot.data?.docs ?? [])
+                            .map((doc) => Expense.fromFirestore(doc))
+                            .toList();
+
+                        final activities = _mergeActivities(
+                          gigs: gigSnapshot.data ?? [],
+                          songs: songSnapshot.data ?? [],
+                          expenses: expenses,
+                        );
+
+                        if (activities.isEmpty) {
+                          return Text(
+                            'No recent activity yet.',
+                            style: AppTexts.bodyM.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          children: activities
+                              .map((a) => _ActivityItem(text: a.label))
+                              .toList(),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }

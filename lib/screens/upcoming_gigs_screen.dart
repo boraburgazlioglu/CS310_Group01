@@ -13,8 +13,6 @@ import '../providers/band_provider.dart';
 class UpcomingGigsScreen extends StatefulWidget {
   const UpcomingGigsScreen({super.key});
 
-  static const String bandName = 'Avareler';
-
   @override
   State<UpcomingGigsScreen> createState() => _UpcomingGigsScreenState();
 }
@@ -241,7 +239,7 @@ class _UpcomingGigsScreenState extends State<UpcomingGigsScreen> {
       padding: EdgeInsets.fromLTRB(
           AppPadding.L, AppPadding.M, AppPadding.L, AppPadding.S),
       child: Text(
-        'Upcoming Gigs — ${UpcomingGigsScreen.bandName}',
+        'Upcoming Gigs — ${context.watch<BandProvider>().displayBandName}',
         style: AppTexts.headS,
       ),
     );

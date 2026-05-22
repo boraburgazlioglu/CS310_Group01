@@ -58,7 +58,7 @@ class BandmateApp extends StatelessWidget {
         '/rehearsals': (context) => const RehearsalScreen(),
         '/expenses': (context) => const ExpensesScreen(),
         '/login': (context) => const LoginScreen(),
-        '/forgotPass': (context) => const ForgotPasswordScreen(),//dummy for now
+        '/forgotPass': (context) => const ForgotPasswordScreen(),
         '/signup': (context) => const SignupScreen(),
         '/auth': (context) => const AuthGate(),
         '/band': (context) => const BandSelectionScreen(),
